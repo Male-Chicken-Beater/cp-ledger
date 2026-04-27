@@ -60,6 +60,13 @@ header {
   margin-bottom: 24px;
 }
 
+.brand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .brand {
   font-family: 'Fraunces', serif;
   font-weight: 700;
@@ -68,6 +75,47 @@ header {
   text-transform: uppercase;
   color: var(--gold);
   margin-bottom: 6px;
+}
+
+.sync-indicator {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.sync-indicator::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-mute);
+}
+
+.sync-indicator.connected { color: var(--green); border-color: rgba(111, 185, 143, 0.3); }
+.sync-indicator.connected::before { background: var(--green); }
+
+.sync-indicator.syncing { color: var(--gold); border-color: rgba(212, 160, 78, 0.3); }
+.sync-indicator.syncing::before { background: var(--gold); animation: sync-pulse 1s ease-in-out infinite; }
+
+.sync-indicator.error { color: var(--red); border-color: rgba(217, 119, 87, 0.3); }
+.sync-indicator.error::before { background: var(--red); }
+
+.sync-indicator.offline { color: var(--ink-dim); }
+
+@keyframes sync-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .title {
@@ -161,7 +209,11 @@ header {
   padding: 4px;
   border-radius: 10px;
   border: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+
+.tabs::-webkit-scrollbar { display: none; }
 
 .tab {
   flex: 1;
@@ -171,10 +223,12 @@ header {
   padding: 10px 6px;
   border-radius: 7px;
   font-family: 'Fraunces', serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 70px;
 }
 
 .tab.active {
@@ -326,6 +380,7 @@ header {
 .entry-amount.in { color: var(--green); }
 .entry-amount.out { color: var(--red); }
 .entry-amount.overhead { color: var(--blue); }
+.entry-amount.miles { color: var(--gold); }
 
 .entry-delete {
   background: transparent;
@@ -578,7 +633,7 @@ select {
 @media (max-width: 380px) {
   .title { font-size: 24px; }
   .summary-value.takehome { font-size: 19px; }
-  .tab { font-size: 12px; }
+  .tab { font-size: 11px; min-width: 60px; }
   .period-btn { font-size: 12px; }
 }
 
@@ -645,7 +700,6 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
-/* Receipt picker on form */
 .receipt-picker {
   display: grid;
   grid-template-columns: 80px 1fr;
@@ -696,7 +750,6 @@ select {
 .receipt-btn.danger { color: var(--red); border-color: var(--red); }
 .receipt-btn.danger:hover { background: rgba(217, 119, 87, 0.1); }
 
-/* Modal for receipt viewing */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -738,7 +791,6 @@ select {
   cursor: pointer;
 }
 
-/* Category breakdown table */
 .cat-breakdown {
   background: var(--bg-elev);
   border: 1px solid var(--line);
@@ -769,13 +821,167 @@ select {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
+
+/* Mileage stat cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.stat-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+
+.stat-card-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card-value.green { color: var(--green); }
+.stat-card-value.blue { color: var(--blue); }
+.stat-card-value.red { color: var(--red); }
+
+.stat-card-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-dim);
+  margin-top: 3px;
+}
+
+/* Quarterly tax view */
+.quarter-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.quarter-card.current {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, var(--bg-elev) 0%, rgba(212, 160, 78, 0.08) 100%);
+}
+
+.quarter-card.past { opacity: 0.55; }
+
+.quarter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.quarter-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.quarter-due {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-dim);
+  letter-spacing: 0.05em;
+}
+
+.quarter-due.urgent { color: var(--red); font-weight: 600; }
+.quarter-due.upcoming { color: var(--gold); }
+
+.quarter-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.quarter-body:last-of-type { border-bottom: none; }
+
+.quarter-body-label {
+  font-family: 'Fraunces', serif;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.quarter-body-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.quarter-body-value.amount-due {
+  color: var(--copper);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.quarter-action {
+  display: block;
+  text-align: center;
+  background: var(--gold);
+  color: var(--bg);
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: 12px;
+  transition: background 0.15s;
+}
+
+.quarter-action:hover { background: var(--gold-bright); }
+
+.banner {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--ink-dim);
+  line-height: 1.5;
+}
+
+.banner.urgent {
+  border-color: var(--red);
+  background: linear-gradient(135deg, var(--bg-elev) 0%, rgba(217, 119, 87, 0.1) 100%);
+  color: var(--ink);
+}
+
+.banner strong { color: var(--ink); font-weight: 600; }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div class="brand">Critical Plumbing Ohio</div>
-    <h1 class="title">The <em>Ledger</em></h1>
+    <div class="brand-row">
+      <div>
+        <div class="brand">Critical Plumbing Ohio</div>
+        <h1 class="title">The <em>Ledger</em></h1>
+      </div>
+      <div class="sync-indicator offline" id="sync-indicator">Local</div>
+    </div>
     <div class="period-toggle">
       <button class="period-btn active" data-period="week">Week</button>
       <button class="period-btn" data-period="month">Month</button>
@@ -793,9 +999,12 @@ select {
   <div class="tabs">
     <button class="tab active" data-view="ledger">Ledger</button>
     <button class="tab" data-view="overhead">Overhead</button>
+    <button class="tab" data-view="mileage">Mileage</button>
+    <button class="tab" data-view="taxes">Taxes</button>
     <button class="tab" data-view="settings">Settings</button>
   </div>
 
+  <!-- LEDGER VIEW -->
   <div class="view active" id="view-ledger">
     <div class="summary">
       <div class="summary-row">
@@ -811,7 +1020,11 @@ select {
         <span class="summary-value overhead" id="sum-overhead">$0.00</span>
       </div>
       <div class="summary-row">
-        <span class="summary-label">Net (after all expenses)</span>
+        <span class="summary-label">Mileage deduction</span>
+        <span class="summary-value tax" id="sum-mileage-deduction">$0.00</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Net (after all deductions)</span>
         <span class="summary-value" id="sum-net">$0.00</span>
       </div>
       <div class="summary-row">
@@ -883,6 +1096,7 @@ select {
     </div>
   </div>
 
+  <!-- OVERHEAD VIEW -->
   <div class="view" id="view-overhead">
     <div class="overhead-summary">
       <span class="overhead-summary-label">Weekly overhead total</span>
@@ -937,7 +1151,87 @@ select {
     <div class="entries" id="overhead-list"></div>
   </div>
 
+  <!-- MILEAGE VIEW -->
+  <div class="view" id="view-mileage">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">YTD Miles</div>
+        <div class="stat-card-value" id="mileage-ytd-miles">0</div>
+        <div class="stat-card-sub" id="mileage-ytd-miles-sub">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">YTD Deduction</div>
+        <div class="stat-card-value green" id="mileage-ytd-deduction">$0.00</div>
+        <div class="stat-card-sub" id="mileage-rate-sub">at $0.70/mi</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">YTD Gas Spent</div>
+        <div class="stat-card-value red" id="mileage-ytd-gas">$0.00</div>
+        <div class="stat-card-sub" id="mileage-mpg">— MPG</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Last Odometer</div>
+        <div class="stat-card-value blue" id="mileage-last-odo">—</div>
+        <div class="stat-card-sub" id="mileage-last-date">—</div>
+      </div>
+    </div>
+
+    <p class="help-text" style="margin: 8px 4px 16px; font-style: normal;">
+      Log every fillup. Odometer + gas spent. Each fillup also creates a fuel expense entry (Vehicle Fuel category) automatically. Mileage deduction uses standard IRS rate, calculated against YTD net.
+    </p>
+
+    <button class="toggle-form" id="show-fillup-form-btn"><span class="plus">+</span>Log fillup</button>
+
+    <div class="form-card" id="fillup-form" style="display:none;">
+      <div class="form-grid">
+        <div>
+          <label for="fillup-date">Date</label>
+          <input type="date" id="fillup-date">
+        </div>
+        <div>
+          <label for="fillup-odometer">Odometer reading (miles)</label>
+          <input type="number" id="fillup-odometer" inputmode="numeric" step="1" placeholder="e.g. 87432">
+        </div>
+        <div>
+          <label for="fillup-cost">Total spent on gas ($)</label>
+          <input type="number" id="fillup-cost" inputmode="decimal" step="0.01" placeholder="0.00">
+        </div>
+        <div>
+          <label for="fillup-station">Station / location (optional)</label>
+          <input type="text" id="fillup-station" placeholder="e.g. Sheetz on Lorain Rd" autocomplete="off">
+        </div>
+        <button class="btn" id="save-fillup">Save Fillup</button>
+        <button class="btn btn-secondary" id="cancel-fillup">Cancel</button>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="section-title">Fillups <em id="fillup-count">— 0 —</em></span>
+    </div>
+    <div class="entries" id="fillup-list"></div>
+  </div>
+
+  <!-- TAXES VIEW -->
+  <div class="view" id="view-taxes">
+    <div class="banner" id="tax-banner">
+      <strong>Quarterly estimated taxes.</strong> As a self-employed plumber, the IRS expects payments four times a year — not just on April 15. Missing these means underpayment penalties. The amounts below are <strong>estimates</strong> based on your YTD net income and the tax rate in Settings.
+    </div>
+
+    <div id="quarters-list"></div>
+
+    <p class="help-text" style="margin: 16px 4px;">
+      Pay federal estimates at <a href="https://directpay.irs.gov" target="_blank" style="color: var(--gold); text-decoration: none;">IRS Direct Pay</a> (free). Ohio state estimates at <a href="https://tax.ohio.gov" target="_blank" style="color: var(--gold); text-decoration: none;">tax.ohio.gov</a>. This app gives federal estimates only — Ohio adds roughly 3-4% on top.
+    </p>
+  </div>
+
+  <!-- SETTINGS VIEW -->
   <div class="view" id="view-settings">
+    <div class="settings-section">
+      <h3>Cloud Sync</h3>
+      <div id="auth-status" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-dim); margin-bottom: 12px;">Connecting...</div>
+      <p class="help-text" style="margin-top:0;">Your data automatically syncs across devices when online. Receipts upload to Firebase Storage. Works offline — syncs when you reconnect.</p>
+    </div>
+
     <div class="settings-section">
       <h3>Tax Rate</h3>
       <div class="tax-display" id="tax-display">30%</div>
@@ -951,14 +1245,28 @@ select {
           <button class="btn" id="save-tax" style="height:46px;">Save</button>
         </div>
       </div>
-      <p class="help-text">Applied to net (income − job expenses − overhead). Adjust if your actual effective rate is different — federal SE tax alone is ~15.3%, plus federal income, plus Ohio state and local. 30% is a common safe starting point for self-employed plumbers.</p>
+      <p class="help-text">Applied to net (income − expenses − overhead − mileage deduction). Federal SE tax alone is ~15.3%, plus federal income, plus Ohio. 30% is a common safe baseline.</p>
+    </div>
+
+    <div class="settings-section">
+      <h3>Mileage Rate</h3>
+      <div class="form-row-split">
+        <div>
+          <label>Cents per mile</label>
+          <input type="number" id="mileage-rate-input" min="0" max="200" step="0.5" value="70">
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button class="btn" id="save-mileage-rate" style="height:46px;">Save</button>
+        </div>
+      </div>
+      <p class="help-text">2026 IRS standard mileage rate is around 70¢/mile. Check the latest at irs.gov.</p>
     </div>
 
     <div class="settings-section">
       <h3>Data</h3>
-      <p class="help-text" style="margin-top:0; margin-bottom:12px;">Entries and overhead live in browser storage. Receipt photos live in IndexedDB on this device. Export weekly to keep records.</p>
+      <p class="help-text" style="margin-top:0; margin-bottom:12px;">Cloud sync handles backups automatically when online. CSV export still useful for your accountant.</p>
       <button class="btn btn-secondary" id="export-csv">Export ledger as CSV</button>
-      <button class="btn btn-secondary" id="export-receipts" style="margin-top:8px;">Export all receipts as ZIP</button>
+      <button class="btn btn-secondary" id="export-receipts" style="margin-top:8px;">Download all receipts</button>
       <button class="danger-btn" id="clear-data">Erase all data</button>
     </div>
 
@@ -985,50 +1293,97 @@ select {
   </div>
 </div>
 
+<!-- Firebase SDK (CDN, ES modules) -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, query, enableIndexedDbPersistence
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  getStorage, ref as storageRef, uploadString, getDownloadURL, deleteObject
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCEdzshvCb7NyZ_Y8GikkMEY3_4VbheAns",
+  authDomain: "critical-plumbing-app.firebaseapp.com",
+  projectId: "critical-plumbing-app",
+  storageBucket: "critical-plumbing-app.firebasestorage.app",
+  messagingSenderId: "594245848168",
+  appId: "1:594245848168:web:a2cec278cb4ffd7f8c7fdd"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const fdb = getFirestore(fbApp);
+const fstorage = getStorage(fbApp);
+
+try {
+  await enableIndexedDbPersistence(fdb);
+} catch (e) {
+  console.warn('Firestore offline persistence not available:', e.code);
+}
+
+// Expose to global scope for the main script
+window.__firebase = {
+  auth, fdb, fstorage,
+  doc, setDoc, deleteDoc, collection, onSnapshot, query,
+  storageRef, uploadString, getDownloadURL, deleteObject,
+  signInAnonymously, onAuthStateChanged
+};
+window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
 <script>
 'use strict';
 
-// ===== CONFIG =====
 const STORAGE_KEY = 'cp_ledger_v1';
 const SETTINGS_KEY = 'cp_ledger_settings_v1';
 const OVERHEAD_KEY = 'cp_ledger_overhead_v1';
+const MILEAGE_KEY = 'cp_ledger_mileage_v1';
 const DB_NAME = 'cp_ledger_db';
 const DB_VERSION = 1;
 const RECEIPT_STORE = 'receipts';
 
-// Schedule C categories most relevant to a plumbing contractor
 const CATEGORIES = [
-  { id: 'supplies', label: 'Supplies & Materials', schedC: 'Line 22 - Supplies' },
-  { id: 'parts', label: 'Parts (Cost of Goods)', schedC: 'Part III - COGS' },
-  { id: 'tools', label: 'Tools & Small Equipment', schedC: 'Line 22 - Supplies' },
-  { id: 'vehicle', label: 'Vehicle Fuel / Maintenance', schedC: 'Line 9 - Car & Truck' },
-  { id: 'vehicle_payment', label: 'Vehicle Payment / Lease', schedC: 'Line 20a - Rent' },
-  { id: 'insurance', label: 'Business Insurance', schedC: 'Line 15 - Insurance' },
-  { id: 'phone_internet', label: 'Phone & Internet', schedC: 'Line 25 - Utilities' },
-  { id: 'software', label: 'Software / Subscriptions', schedC: 'Line 27a - Other' },
-  { id: 'advertising', label: 'Advertising / Marketing', schedC: 'Line 8 - Advertising' },
-  { id: 'professional', label: 'Professional Services (CPA, legal)', schedC: 'Line 17 - Legal/Pro' },
-  { id: 'permits', label: 'Permits & Licenses', schedC: 'Line 23 - Taxes/Licenses' },
-  { id: 'training', label: 'Continuing Education / Training', schedC: 'Line 27a - Other' },
-  { id: 'office', label: 'Office Expense', schedC: 'Line 18 - Office' },
-  { id: 'travel', label: 'Travel (lodging, etc.)', schedC: 'Line 24a - Travel' },
-  { id: 'meals', label: 'Business Meals (50% deductible)', schedC: 'Line 24b - Meals' },
-  { id: 'bank_fees', label: 'Bank / Stripe / Card Fees', schedC: 'Line 27a - Other' },
-  { id: 'other', label: 'Other', schedC: 'Line 27a - Other' }
+  { id: 'supplies', label: 'Supplies & Materials', schedC: 'Line 22' },
+  { id: 'parts', label: 'Parts (Cost of Goods)', schedC: 'Part III' },
+  { id: 'tools', label: 'Tools & Small Equipment', schedC: 'Line 22' },
+  { id: 'vehicle_fuel', label: 'Vehicle Fuel', schedC: 'Line 9' },
+  { id: 'vehicle_maint', label: 'Vehicle Maintenance', schedC: 'Line 9' },
+  { id: 'vehicle_payment', label: 'Vehicle Payment / Lease', schedC: 'Line 20a' },
+  { id: 'insurance', label: 'Business Insurance', schedC: 'Line 15' },
+  { id: 'phone_internet', label: 'Phone & Internet', schedC: 'Line 25' },
+  { id: 'software', label: 'Software / Subscriptions', schedC: 'Line 27a' },
+  { id: 'advertising', label: 'Advertising / Marketing', schedC: 'Line 8' },
+  { id: 'professional', label: 'Professional Services (CPA, legal)', schedC: 'Line 17' },
+  { id: 'permits', label: 'Permits & Licenses', schedC: 'Line 23' },
+  { id: 'training', label: 'Continuing Education / Training', schedC: 'Line 27a' },
+  { id: 'office', label: 'Office Expense', schedC: 'Line 18' },
+  { id: 'travel', label: 'Travel (lodging, etc.)', schedC: 'Line 24a' },
+  { id: 'meals', label: 'Business Meals (50% deductible)', schedC: 'Line 24b' },
+  { id: 'bank_fees', label: 'Bank / Stripe / Card Fees', schedC: 'Line 27a' },
+  { id: 'other', label: 'Other', schedC: 'Line 27a' }
 ];
 
 let state = {
   entries: [],
   overhead: [],
+  mileage: [],   // fillups
   weekOffset: 0,
   monthOffset: 0,
   period: 'week',
-  pendingReceipt: null  // base64 string staged for the next save
+  pendingReceipt: null,
+  pendingReceiptFile: null  // raw file for cloud upload
 };
-let settings = { taxRate: 30 };
-let db = null;
+let settings = { taxRate: 30, mileageRate: 70 }; // mileage in cents
+let db = null; // IndexedDB for offline receipt cache
+let userId = null;
+let firebaseReady = false;
+let unsubFns = [];
+let suppressSaveBack = false; // prevent feedback loop on snapshot updates
 
-// ===== INDEXEDDB FOR RECEIPTS =====
+// ===== INDEXEDDB FOR LOCAL RECEIPT CACHE =====
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -1043,7 +1398,7 @@ function openDB() {
   });
 }
 
-function saveReceipt(id, base64) {
+function saveReceiptLocal(id, base64) {
   return new Promise((resolve, reject) => {
     if (!db) return reject(new Error('DB not ready'));
     const tx = db.transaction(RECEIPT_STORE, 'readwrite');
@@ -1053,7 +1408,7 @@ function saveReceipt(id, base64) {
   });
 }
 
-function loadReceipt(id) {
+function loadReceiptLocal(id) {
   return new Promise((resolve, reject) => {
     if (!db) return resolve(null);
     const tx = db.transaction(RECEIPT_STORE, 'readonly');
@@ -1063,7 +1418,7 @@ function loadReceipt(id) {
   });
 }
 
-function deleteReceipt(id) {
+function deleteReceiptLocal(id) {
   return new Promise((resolve) => {
     if (!db) return resolve();
     const tx = db.transaction(RECEIPT_STORE, 'readwrite');
@@ -1073,7 +1428,7 @@ function deleteReceipt(id) {
   });
 }
 
-function getAllReceipts() {
+function getAllReceiptsLocal() {
   return new Promise((resolve) => {
     if (!db) return resolve([]);
     const tx = db.transaction(RECEIPT_STORE, 'readonly');
@@ -1091,8 +1446,8 @@ function getAllReceipts() {
   });
 }
 
-// ===== STORAGE =====
-function loadState() {
+// ===== LOCAL STORAGE FALLBACK =====
+function loadStateLocal() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -1101,27 +1456,224 @@ function loadState() {
     }
     const rawOh = localStorage.getItem(OVERHEAD_KEY);
     if (rawOh) state.overhead = JSON.parse(rawOh) || [];
+    const rawMi = localStorage.getItem(MILEAGE_KEY);
+    if (rawMi) state.mileage = JSON.parse(rawMi) || [];
     const rawSettings = localStorage.getItem(SETTINGS_KEY);
     if (rawSettings) {
       const parsed = JSON.parse(rawSettings);
       settings.taxRate = typeof parsed.taxRate === 'number' ? parsed.taxRate : 30;
+      settings.mileageRate = typeof parsed.mileageRate === 'number' ? parsed.mileageRate : 70;
     }
   } catch (e) { console.error('Load failed:', e); }
 }
 
-function saveEntries() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ entries: state.entries })); }
-  catch (e) { alert('Could not save. Storage may be full.'); }
-}
-
-function saveOverhead() {
-  try { localStorage.setItem(OVERHEAD_KEY, JSON.stringify(state.overhead)); }
-  catch (e) { alert('Could not save overhead.'); }
+function saveLocalAll() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ entries: state.entries }));
+    localStorage.setItem(OVERHEAD_KEY, JSON.stringify(state.overhead));
+    localStorage.setItem(MILEAGE_KEY, JSON.stringify(state.mileage));
+  } catch (e) { console.error('Save local failed:', e); }
 }
 
 function saveSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
   catch (e) { console.error(e); }
+  if (firebaseReady && userId) {
+    syncSettingsCloud();
+  }
+}
+
+// ===== FIREBASE SYNC =====
+function setSyncStatus(status, label) {
+  const el = document.getElementById('sync-indicator');
+  el.classList.remove('connected', 'syncing', 'error', 'offline');
+  el.classList.add(status);
+  el.textContent = label;
+}
+
+function showAuthStatus(text) {
+  const el = document.getElementById('auth-status');
+  if (el) el.textContent = text;
+}
+
+async function initFirebase() {
+  if (!window.__firebase) return;
+  const fb = window.__firebase;
+  setSyncStatus('syncing', 'Connecting');
+
+  try {
+    fb.onAuthStateChanged(fb.auth, async (user) => {
+      if (user) {
+        userId = user.uid;
+        firebaseReady = true;
+        showAuthStatus(`Signed in (anonymous) — ID: ${user.uid.slice(0, 8)}…`);
+        setSyncStatus('connected', 'Synced');
+        attachFirestoreListeners();
+      } else {
+        try {
+          await fb.signInAnonymously(fb.auth);
+        } catch (e) {
+          console.error('Anonymous sign-in failed:', e);
+          setSyncStatus('error', 'Auth Err');
+          showAuthStatus('Sign-in failed: ' + e.message);
+        }
+      }
+    });
+  } catch (e) {
+    console.error('Firebase init failed:', e);
+    setSyncStatus('error', 'Sync Err');
+  }
+}
+
+function attachFirestoreListeners() {
+  if (!userId || !window.__firebase) return;
+  const fb = window.__firebase;
+
+  // Cleanup any prior listeners
+  unsubFns.forEach(fn => { try { fn(); } catch {} });
+  unsubFns = [];
+
+  const userDocBase = `ledgers/${userId}`;
+
+  // Settings doc
+  const settingsRef = fb.doc(fb.fdb, `${userDocBase}/meta/settings`);
+  unsubFns.push(fb.onSnapshot(settingsRef, (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      if (typeof data.taxRate === 'number') settings.taxRate = data.taxRate;
+      if (typeof data.mileageRate === 'number') settings.mileageRate = data.mileageRate;
+      saveSettingsLocal();
+      render();
+    }
+  }, (e) => console.error('settings snapshot err', e)));
+
+  // Entries collection
+  const entriesRef = fb.collection(fb.fdb, `${userDocBase}/entries`);
+  unsubFns.push(fb.onSnapshot(entriesRef, (snap) => {
+    suppressSaveBack = true;
+    state.entries = [];
+    snap.forEach(doc => {
+      state.entries.push({ ...doc.data(), id: doc.id });
+    });
+    saveLocalAll();
+    suppressSaveBack = false;
+    render();
+  }, (e) => console.error('entries snapshot err', e)));
+
+  // Overhead collection
+  const overheadRef = fb.collection(fb.fdb, `${userDocBase}/overhead`);
+  unsubFns.push(fb.onSnapshot(overheadRef, (snap) => {
+    suppressSaveBack = true;
+    state.overhead = [];
+    snap.forEach(doc => {
+      state.overhead.push({ ...doc.data(), id: doc.id });
+    });
+    saveLocalAll();
+    suppressSaveBack = false;
+    render();
+  }, (e) => console.error('overhead snapshot err', e)));
+
+  // Mileage collection
+  const mileageRef = fb.collection(fb.fdb, `${userDocBase}/mileage`);
+  unsubFns.push(fb.onSnapshot(mileageRef, (snap) => {
+    suppressSaveBack = true;
+    state.mileage = [];
+    snap.forEach(doc => {
+      state.mileage.push({ ...doc.data(), id: doc.id });
+    });
+    saveLocalAll();
+    suppressSaveBack = false;
+    render();
+  }, (e) => console.error('mileage snapshot err', e)));
+}
+
+function saveSettingsLocal() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {}
+}
+
+async function syncEntryCloud(entry) {
+  if (!firebaseReady || !userId || suppressSaveBack) return;
+  const fb = window.__firebase;
+  const ref = fb.doc(fb.fdb, `ledgers/${userId}/entries/${entry.id}`);
+  try { await fb.setDoc(ref, entry); }
+  catch (e) { console.error('entry sync err', e); }
+}
+
+async function deleteEntryCloud(id) {
+  if (!firebaseReady || !userId) return;
+  const fb = window.__firebase;
+  try { await fb.deleteDoc(fb.doc(fb.fdb, `ledgers/${userId}/entries/${id}`)); }
+  catch (e) { console.error('entry delete cloud err', e); }
+}
+
+async function syncOverheadCloud(item) {
+  if (!firebaseReady || !userId || suppressSaveBack) return;
+  const fb = window.__firebase;
+  const ref = fb.doc(fb.fdb, `ledgers/${userId}/overhead/${item.id}`);
+  try { await fb.setDoc(ref, item); }
+  catch (e) { console.error('overhead sync err', e); }
+}
+
+async function deleteOverheadCloud(id) {
+  if (!firebaseReady || !userId) return;
+  const fb = window.__firebase;
+  try { await fb.deleteDoc(fb.doc(fb.fdb, `ledgers/${userId}/overhead/${id}`)); }
+  catch (e) { console.error('overhead delete cloud err', e); }
+}
+
+async function syncMileageCloud(item) {
+  if (!firebaseReady || !userId || suppressSaveBack) return;
+  const fb = window.__firebase;
+  const ref = fb.doc(fb.fdb, `ledgers/${userId}/mileage/${item.id}`);
+  try { await fb.setDoc(ref, item); }
+  catch (e) { console.error('mileage sync err', e); }
+}
+
+async function deleteMileageCloud(id) {
+  if (!firebaseReady || !userId) return;
+  const fb = window.__firebase;
+  try { await fb.deleteDoc(fb.doc(fb.fdb, `ledgers/${userId}/mileage/${id}`)); }
+  catch (e) { console.error('mileage delete cloud err', e); }
+}
+
+async function syncSettingsCloud() {
+  if (!firebaseReady || !userId) return;
+  const fb = window.__firebase;
+  const ref = fb.doc(fb.fdb, `ledgers/${userId}/meta/settings`);
+  try { await fb.setDoc(ref, settings); }
+  catch (e) { console.error('settings sync err', e); }
+}
+
+async function uploadReceiptCloud(entryId, base64) {
+  if (!firebaseReady || !userId) return null;
+  const fb = window.__firebase;
+  try {
+    const ref = fb.storageRef(fb.fstorage, `receipts/${userId}/${entryId}.jpg`);
+    await fb.uploadString(ref, base64, 'data_url');
+    const url = await fb.getDownloadURL(ref);
+    return url;
+  } catch (e) {
+    console.error('receipt upload err', e);
+    return null;
+  }
+}
+
+async function deleteReceiptCloud(entryId) {
+  if (!firebaseReady || !userId) return;
+  const fb = window.__firebase;
+  try {
+    const ref = fb.storageRef(fb.fstorage, `receipts/${userId}/${entryId}.jpg`);
+    await fb.deleteObject(ref);
+  } catch (e) { /* may not exist, that's fine */ }
+}
+
+async function loadReceiptForView(entry) {
+  // Try local cache first
+  const local = await loadReceiptLocal(String(entry.id));
+  if (local) return local;
+  // Fall back to cloud URL if we have one
+  if (entry.receiptUrl) return entry.receiptUrl;
+  return null;
 }
 
 // ===== DATE HELPERS =====
@@ -1185,6 +1737,10 @@ function formatMoney(n) {
   return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatNum(n, dec = 0) {
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
 function getCategoryLabel(id) {
   const c = CATEGORIES.find(x => x.id === id);
   return c ? c.label : id;
@@ -1207,11 +1763,8 @@ function getWeekOverhead(weekStart, weekEnd) {
     if (!item.startDate) continue;
     const start = new Date(item.startDate + 'T12:00:00');
     if (start > weekEnd) continue;
-    if (item.frequency === 'weekly') {
-      total += Number(item.amount) || 0;
-    } else if (item.frequency === 'monthly') {
-      total += (Number(item.amount) || 0) * 12 / 52;
-    }
+    if (item.frequency === 'weekly') total += Number(item.amount) || 0;
+    else if (item.frequency === 'monthly') total += (Number(item.amount) || 0) * 12 / 52;
   }
   return total;
 }
@@ -1226,6 +1779,61 @@ function getMonthOverhead(monthStart, monthEnd) {
   return total;
 }
 
+// ===== MILEAGE =====
+function getSortedFillups() {
+  return [...state.mileage].sort((a, b) => {
+    const dc = a.date.localeCompare(b.date);
+    if (dc !== 0) return dc;
+    return (a.odometer || 0) - (b.odometer || 0);
+  });
+}
+
+function getMileageInRange(start, end) {
+  // Sum miles between fillups whose END fillup date is in [start, end]
+  const sorted = getSortedFillups();
+  let totalMiles = 0;
+  let totalGas = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    const f = sorted[i];
+    const prev = sorted[i - 1];
+    const fd = new Date(f.date + 'T12:00:00');
+    if (fd >= start && fd <= end) {
+      const miles = (f.odometer || 0) - (prev.odometer || 0);
+      if (miles > 0) totalMiles += miles;
+      totalGas += Number(f.cost) || 0;
+    }
+  }
+  // Also count the very first fillup's gas cost if in range (no miles attributable)
+  if (sorted.length > 0) {
+    const f = sorted[0];
+    const fd = new Date(f.date + 'T12:00:00');
+    if (fd >= start && fd <= end && sorted.length === 1) {
+      totalGas += Number(f.cost) || 0;
+    } else if (sorted.length > 1) {
+      const fd0 = new Date(sorted[0].date + 'T12:00:00');
+      if (fd0 >= start && fd0 <= end) {
+        totalGas += Number(sorted[0].cost) || 0;
+      }
+    }
+  }
+  return { miles: totalMiles, gas: totalGas };
+}
+
+function getMileageDeduction(miles) {
+  return miles * (settings.mileageRate / 100);
+}
+
+function getYTDStart() {
+  const now = new Date();
+  return new Date(now.getFullYear(), 0, 1);
+}
+
+function getYTDEnd() {
+  const now = new Date();
+  return new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+}
+
+// ===== ACTIVE PERIOD =====
 function getActivePeriod() {
   if (state.period === 'month') {
     const start = getCurrentMonthStart();
@@ -1241,13 +1849,15 @@ function getEntriesInRange(start, end) {
   return state.entries.filter(e => {
     const d = new Date(e.date + 'T12:00:00');
     return d >= start && d <= end;
-  }).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  }).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
 }
 
 // ===== RENDER =====
 function render() {
   renderLedger();
   renderOverhead();
+  renderMileage();
+  renderTaxes();
 }
 
 function renderLedger() {
@@ -1264,13 +1874,16 @@ function renderLedger() {
   const overhead = state.period === 'month'
     ? getMonthOverhead(start, end)
     : getWeekOverhead(start, end);
-  const net = income - expense - overhead;
+  const mileageInfo = getMileageInRange(start, end);
+  const mileageDeduction = getMileageDeduction(mileageInfo.miles);
+  const net = income - expense - overhead - mileageDeduction;
   const tax = Math.max(0, net * settings.taxRate / 100);
   const takehome = net - tax;
 
   document.getElementById('sum-income').textContent = formatMoney(income);
   document.getElementById('sum-expense').textContent = formatMoney(expense);
   document.getElementById('sum-overhead').textContent = formatMoney(overhead);
+  document.getElementById('sum-mileage-deduction').textContent = formatMoney(mileageDeduction);
   document.getElementById('sum-net').textContent = formatMoney(net);
   document.getElementById('sum-tax').textContent = formatMoney(tax);
   document.getElementById('sum-takehome').textContent = formatMoney(takehome);
@@ -1289,7 +1902,7 @@ function renderLedger() {
         ? `+${formatMoney(e.income)} / −${formatMoney(e.expense)}`
         : (e.income > 0 ? 'income' : 'expense');
       const catTag = e.category ? `<span class="category-pill">${escapeHtml(getCategoryLabel(e.category))}</span>` : '';
-      const receiptThumb = e.hasReceipt
+      const receiptThumb = (e.hasReceipt || e.receiptUrl)
         ? `<div class="receipt-thumb" data-receipt-id="${e.id}" id="thumb-${e.id}"></div>`
         : '';
       return `
@@ -1311,22 +1924,21 @@ function renderLedger() {
       `;
     }).join('');
 
-    // Hydrate receipt thumbnails async
     entries.forEach(async e => {
-      if (e.hasReceipt) {
+      if (e.hasReceipt || e.receiptUrl) {
         const thumb = document.getElementById(`thumb-${e.id}`);
         if (thumb) {
-          const data = await loadReceipt(String(e.id));
+          const data = await loadReceiptForView(e);
           if (data) thumb.style.backgroundImage = `url("${data}")`;
         }
       }
     });
   }
 
-  // Category breakdown (only for expenses in current period)
+  // Category breakdown
   const expenseEntries = entries.filter(e => e.expense > 0);
   const catWrap = document.getElementById('cat-breakdown-wrap');
-  if (expenseEntries.length === 0) {
+  if (expenseEntries.length === 0 && mileageDeduction === 0) {
     catWrap.style.display = 'none';
   } else {
     catWrap.style.display = 'block';
@@ -1335,7 +1947,6 @@ function renderLedger() {
       const cat = e.category || 'other';
       catTotals[cat] = (catTotals[cat] || 0) + (e.expense || 0);
     });
-    // Also fold in overhead for the period
     if (state.period === 'month') {
       state.overhead.forEach(item => {
         if (!item.startDate) return;
@@ -1359,15 +1970,21 @@ function renderLedger() {
         catTotals[cat] = (catTotals[cat] || 0) + weekAmt;
       });
     }
+    if (mileageDeduction > 0) {
+      catTotals['mileage_deduction'] = (catTotals['mileage_deduction'] || 0) + mileageDeduction;
+    }
 
     const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
     const breakdown = document.getElementById('cat-breakdown');
-    breakdown.innerHTML = sorted.map(([cat, amt]) => `
-      <div class="cat-row">
-        <span class="cat-row-name">${escapeHtml(getCategoryLabel(cat))}</span>
-        <span class="cat-row-amount">${formatMoney(amt)}</span>
-      </div>
-    `).join('');
+    breakdown.innerHTML = sorted.map(([cat, amt]) => {
+      const lbl = cat === 'mileage_deduction' ? `Mileage Deduction (Line 9)` : escapeHtml(getCategoryLabel(cat));
+      return `
+        <div class="cat-row">
+          <span class="cat-row-name">${lbl}</span>
+          <span class="cat-row-amount">${formatMoney(amt)}</span>
+        </div>
+      `;
+    }).join('');
   }
 }
 
@@ -1422,6 +2039,159 @@ function renderOverhead() {
   }).join('');
 }
 
+function renderMileage() {
+  const ytdStart = getYTDStart();
+  const ytdEnd = getYTDEnd();
+  const ytd = getMileageInRange(ytdStart, ytdEnd);
+  const ytdDeduction = getMileageDeduction(ytd.miles);
+  const mpg = ytd.gas > 0 && ytd.miles > 0
+    ? (ytd.miles / (ytd.gas / 3.50)).toFixed(1)  // rough est: gas spent / 3.50/gal
+    : null;
+
+  document.getElementById('mileage-ytd-miles').textContent = formatNum(ytd.miles);
+  document.getElementById('mileage-ytd-miles-sub').textContent = `${state.mileage.length} fillup${state.mileage.length === 1 ? '' : 's'} this year`;
+  document.getElementById('mileage-ytd-deduction').textContent = formatMoney(ytdDeduction);
+  document.getElementById('mileage-rate-sub').textContent = `at $${(settings.mileageRate / 100).toFixed(2)}/mi`;
+  document.getElementById('mileage-ytd-gas').textContent = formatMoney(ytd.gas);
+  document.getElementById('mileage-mpg').textContent = mpg ? `~${mpg} MPG (est)` : 'MPG: log 2+ fillups';
+
+  const sorted = getSortedFillups();
+  const last = sorted[sorted.length - 1];
+  if (last) {
+    document.getElementById('mileage-last-odo').textContent = formatNum(last.odometer);
+    document.getElementById('mileage-last-date').textContent = formatDate(last.date);
+  } else {
+    document.getElementById('mileage-last-odo').textContent = '—';
+    document.getElementById('mileage-last-date').textContent = 'No fillups yet';
+  }
+
+  document.getElementById('fillup-count').textContent = `— ${state.mileage.length} —`;
+  const list = document.getElementById('fillup-list');
+  if (state.mileage.length === 0) {
+    list.innerHTML = '<div class="empty">No fillups yet. Tap "+ Log fillup" each time you get gas.</div>';
+    return;
+  }
+
+  const recent = [...sorted].reverse();
+  list.innerHTML = recent.map((f, idx) => {
+    const reverseIdx = sorted.length - 1 - idx;
+    const prev = reverseIdx > 0 ? sorted[reverseIdx - 1] : null;
+    const milesSince = prev ? (f.odometer - prev.odometer) : null;
+    const station = f.station ? ` · ${escapeHtml(f.station)}` : '';
+    const milesLabel = milesSince !== null && milesSince > 0
+      ? `+${formatNum(milesSince)} mi`
+      : (prev ? '—' : 'first fillup');
+    return `
+      <div class="entry fade-in">
+        <div class="entry-main">
+          <div class="entry-name">${formatDate(f.date)} · ${formatNum(f.odometer)} mi</div>
+          <div class="entry-meta">
+            <span>${milesLabel}${station}</span>
+          </div>
+        </div>
+        <div class="entry-row">
+          <div class="entry-amount out">${formatMoney(f.cost || 0)}</div>
+          <button class="entry-delete" data-id="${f.id}" data-type="mileage" aria-label="Delete">×</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTaxes() {
+  const list = document.getElementById('quarters-list');
+  const now = new Date();
+  const year = now.getFullYear();
+
+  // 2026 estimated tax deadlines (federal)
+  const quarters = [
+    { name: 'Q1', startMonth: 0, endMonth: 2, dueDate: new Date(year, 3, 15), period: 'Jan – Mar' },
+    { name: 'Q2', startMonth: 3, endMonth: 4, dueDate: new Date(year, 5, 15), period: 'Apr – May' },
+    { name: 'Q3', startMonth: 5, endMonth: 7, dueDate: new Date(year, 8, 15), period: 'Jun – Aug' },
+    { name: 'Q4', startMonth: 8, endMonth: 11, dueDate: new Date(year + 1, 0, 15), period: 'Sep – Dec' }
+  ];
+
+  list.innerHTML = quarters.map(q => {
+    const qStart = new Date(year, q.startMonth, 1);
+    const qEnd = new Date(year, q.endMonth + 1, 0, 23, 59, 59, 999);
+
+    const qEntries = state.entries.filter(e => {
+      const d = new Date(e.date + 'T12:00:00');
+      return d >= qStart && d <= qEnd;
+    });
+    const income = qEntries.reduce((s, e) => s + (e.income || 0), 0);
+    const expense = qEntries.reduce((s, e) => s + (e.expense || 0), 0);
+    const overhead = getQuarterOverhead(qStart, qEnd);
+    const mileageInfo = getMileageInRange(qStart, qEnd);
+    const mileageDed = getMileageDeduction(mileageInfo.miles);
+    const net = income - expense - overhead - mileageDed;
+    const tax = Math.max(0, net * settings.taxRate / 100);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = q.dueDate;
+    const daysUntil = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    let dueClass = '';
+    let dueLabel = '';
+    let cardClass = '';
+    if (today > due) {
+      dueClass = '';
+      dueLabel = `Due ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (paid?)`;
+      cardClass = 'past';
+    } else if (daysUntil <= 14) {
+      dueClass = 'urgent';
+      dueLabel = `Due in ${daysUntil} day${daysUntil === 1 ? '' : 's'} — ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      cardClass = 'current';
+    } else if (daysUntil <= 60) {
+      dueClass = 'upcoming';
+      dueLabel = `Due ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (${daysUntil} days)`;
+      cardClass = 'current';
+    } else {
+      dueLabel = `Due ${due.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+
+    return `
+      <div class="quarter-card ${cardClass}">
+        <div class="quarter-head">
+          <div class="quarter-name">${q.name} · ${q.period}</div>
+          <div class="quarter-due ${dueClass}">${dueLabel}</div>
+        </div>
+        <div class="quarter-body">
+          <span class="quarter-body-label">Income</span>
+          <span class="quarter-body-value">${formatMoney(income)}</span>
+        </div>
+        <div class="quarter-body">
+          <span class="quarter-body-label">Deductions (expenses + overhead + mileage)</span>
+          <span class="quarter-body-value">−${formatMoney(expense + overhead + mileageDed)}</span>
+        </div>
+        <div class="quarter-body">
+          <span class="quarter-body-label">Net</span>
+          <span class="quarter-body-value">${formatMoney(net)}</span>
+        </div>
+        <div class="quarter-body">
+          <span class="quarter-body-label">Estimated federal tax owed</span>
+          <span class="quarter-body-value amount-due">${formatMoney(tax)}</span>
+        </div>
+        ${cardClass === 'current' && tax > 0 ? `<a href="https://directpay.irs.gov" target="_blank" class="quarter-action">Pay via IRS Direct Pay →</a>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function getQuarterOverhead(start, end) {
+  const weeks = getWeeksInRange(start, end);
+  let total = 0;
+  for (const ws of weeks) {
+    const we = getWeekEnd(ws);
+    // Clip the week to the quarter range so overhead doesn't bleed in/out
+    const effectiveStart = ws < start ? start : ws;
+    const effectiveEnd = we > end ? end : we;
+    if (effectiveStart > effectiveEnd) continue;
+    total += getWeekOverhead(effectiveStart, effectiveEnd);
+  }
+  return total;
+}
+
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -1448,26 +2218,31 @@ async function addEntry() {
     if (!confirm('No category selected for this expense. Save anyway? (Categories make tax-time much easier.)')) return;
   }
 
-  const id = Date.now() + Math.random();
+  const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
   const entry = { id, date, name, income, expense, category, notes, hasReceipt: false };
 
   if (state.pendingReceipt) {
     try {
-      await saveReceipt(String(id), state.pendingReceipt);
+      await saveReceiptLocal(id, state.pendingReceipt);
       entry.hasReceipt = true;
+      // Try cloud upload; if it fails, we still have it locally
+      const url = await uploadReceiptCloud(id, state.pendingReceipt);
+      if (url) entry.receiptUrl = url;
     } catch (e) {
-      alert('Receipt could not be saved: ' + e.message);
+      console.error('Receipt save err', e);
     }
   }
 
   state.entries.push(entry);
-  saveEntries();
+  saveLocalAll();
+  await syncEntryCloud(entry);
   state.pendingReceipt = null;
+  state.pendingReceiptFile = null;
   hideEntryForm();
   render();
 }
 
-function addOverhead() {
+async function addOverhead() {
   const name = document.getElementById('oh-name').value.trim();
   const amount = parseFloat(document.getElementById('oh-amount').value) || 0;
   const frequency = document.getElementById('oh-frequency').value;
@@ -1477,23 +2252,82 @@ function addOverhead() {
   if (!name) { alert('Enter a name (e.g. Truck payment).'); return; }
   if (amount <= 0) { alert('Enter an amount greater than zero.'); return; }
 
-  state.overhead.push({ id: Date.now() + Math.random(), name, amount, frequency, category, startDate });
-  saveOverhead();
+  const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
+  const item = { id, name, amount, frequency, category, startDate };
+  state.overhead.push(item);
+  saveLocalAll();
+  await syncOverheadCloud(item);
   hideOverheadForm();
+  render();
+}
+
+async function addFillup() {
+  const date = document.getElementById('fillup-date').value || todayISO();
+  const odometer = parseInt(document.getElementById('fillup-odometer').value) || 0;
+  const cost = parseFloat(document.getElementById('fillup-cost').value) || 0;
+  const station = document.getElementById('fillup-station').value.trim();
+
+  if (odometer <= 0) { alert('Enter an odometer reading.'); return; }
+  if (cost < 0) { alert('Cost cannot be negative.'); return; }
+
+  // Sanity check: warn if odometer is lower than last reading
+  const sorted = getSortedFillups();
+  const last = sorted[sorted.length - 1];
+  if (last && odometer < last.odometer) {
+    if (!confirm(`That odometer (${odometer.toLocaleString()}) is lower than the last reading (${last.odometer.toLocaleString()}). Save anyway?`)) return;
+  }
+
+  const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
+  const fillup = { id, date, odometer, cost, station };
+  state.mileage.push(fillup);
+
+  // ALSO create an expense entry for the gas
+  if (cost > 0) {
+    const expEntry = {
+      id: 'fuel_' + id,
+      date,
+      name: station || 'Fuel',
+      income: 0,
+      expense: cost,
+      category: 'vehicle_fuel',
+      notes: `Fillup: ${odometer.toLocaleString()} mi`,
+      hasReceipt: false,
+      linkedFillupId: id
+    };
+    state.entries.push(expEntry);
+    await syncEntryCloud(expEntry);
+  }
+
+  saveLocalAll();
+  await syncMileageCloud(fillup);
+  hideFillupForm();
   render();
 }
 
 async function deleteItemAction(id, type) {
   if (type === 'entry') {
     const entry = state.entries.find(e => String(e.id) === String(id));
-    if (entry && entry.hasReceipt) {
-      await deleteReceipt(String(id));
+    if (entry && (entry.hasReceipt || entry.receiptUrl)) {
+      await deleteReceiptLocal(String(id));
+      await deleteReceiptCloud(String(id));
     }
     state.entries = state.entries.filter(e => String(e.id) !== String(id));
-    saveEntries();
+    saveLocalAll();
+    await deleteEntryCloud(id);
   } else if (type === 'overhead') {
     state.overhead = state.overhead.filter(o => String(o.id) !== String(id));
-    saveOverhead();
+    saveLocalAll();
+    await deleteOverheadCloud(id);
+  } else if (type === 'mileage') {
+    // Also delete linked fuel expense entry
+    const linkedExpense = state.entries.find(e => e.linkedFillupId === id);
+    if (linkedExpense) {
+      state.entries = state.entries.filter(e => e.id !== linkedExpense.id);
+      await deleteEntryCloud(linkedExpense.id);
+    }
+    state.mileage = state.mileage.filter(m => String(m.id) !== String(id));
+    saveLocalAll();
+    await deleteMileageCloud(id);
   }
   render();
 }
@@ -1531,6 +2365,7 @@ function showEntryForm() {
   document.getElementById('entry-notes').value = '';
   document.getElementById('category-wrap').style.display = 'none';
   state.pendingReceipt = null;
+  state.pendingReceiptFile = null;
   resetReceiptPreview();
   setTimeout(() => document.getElementById('entry-name').focus(), 100);
 }
@@ -1539,6 +2374,7 @@ function hideEntryForm() {
   document.getElementById('entry-form').style.display = 'none';
   document.getElementById('show-form-btn').style.display = 'block';
   state.pendingReceipt = null;
+  state.pendingReceiptFile = null;
 }
 
 function showOverheadForm() {
@@ -1557,6 +2393,21 @@ function hideOverheadForm() {
   document.getElementById('show-overhead-form-btn').style.display = 'block';
 }
 
+function showFillupForm() {
+  document.getElementById('fillup-form').style.display = 'block';
+  document.getElementById('show-fillup-form-btn').style.display = 'none';
+  document.getElementById('fillup-date').value = todayISO();
+  document.getElementById('fillup-odometer').value = '';
+  document.getElementById('fillup-cost').value = '';
+  document.getElementById('fillup-station').value = '';
+  setTimeout(() => document.getElementById('fillup-odometer').focus(), 100);
+}
+
+function hideFillupForm() {
+  document.getElementById('fillup-form').style.display = 'none';
+  document.getElementById('show-fillup-form-btn').style.display = 'block';
+}
+
 function setPeriod(p) {
   state.period = p;
   state.weekOffset = 0;
@@ -1567,7 +2418,6 @@ function setPeriod(p) {
   render();
 }
 
-// ===== RECEIPT HANDLING =====
 function resetReceiptPreview() {
   const preview = document.getElementById('receipt-preview');
   preview.style.backgroundImage = '';
@@ -1618,18 +2468,21 @@ async function handleReceiptFile(file) {
 }
 
 async function showReceiptModal(id) {
-  const data = await loadReceipt(String(id));
-  if (!data) { alert('Receipt not found.'); return; }
+  const entry = state.entries.find(e => String(e.id) === String(id));
+  if (!entry) { alert('Entry not found.'); return; }
+  const data = await loadReceiptForView(entry);
+  if (!data) { alert('Receipt not available.'); return; }
   document.getElementById('receipt-modal-img').src = data;
   document.getElementById('receipt-modal').classList.add('show');
 }
 
-// ===== EXPORT =====
 function exportCSV() {
-  if (state.entries.length === 0 && state.overhead.length === 0) { alert('Nothing to export.'); return; }
+  if (state.entries.length === 0 && state.overhead.length === 0 && state.mileage.length === 0) {
+    alert('Nothing to export.'); return;
+  }
   const rows = [['Date', 'Customer/Store', 'Category', 'Notes', 'Income', 'Expense', 'Net', 'Has Receipt']];
-  const sorted = [...state.entries].sort((a, b) => a.date.localeCompare(b.date));
-  sorted.forEach(e => {
+  const sortedEntries = [...state.entries].sort((a, b) => a.date.localeCompare(b.date));
+  sortedEntries.forEach(e => {
     rows.push([
       e.date,
       (e.name || '').replace(/"/g, '""'),
@@ -1638,7 +2491,7 @@ function exportCSV() {
       (e.income || 0).toFixed(2),
       (e.expense || 0).toFixed(2),
       ((e.income || 0) - (e.expense || 0)).toFixed(2),
-      e.hasReceipt ? 'Yes' : 'No'
+      (e.hasReceipt || e.receiptUrl) ? 'Yes' : 'No'
     ]);
   });
   if (state.overhead.length > 0) {
@@ -1658,6 +2511,23 @@ function exportCSV() {
       ]);
     });
   }
+  if (state.mileage.length > 0) {
+    rows.push([]);
+    rows.push(['MILEAGE', '', '', '', '', '', '', '']);
+    rows.push(['Date', 'Odometer', 'Gas Cost', 'Station', 'Miles Since Last', '', '', '']);
+    const sortedMi = getSortedFillups();
+    sortedMi.forEach((f, i) => {
+      const milesSince = i > 0 ? f.odometer - sortedMi[i - 1].odometer : 0;
+      rows.push([
+        f.date,
+        f.odometer,
+        Number(f.cost || 0).toFixed(2),
+        (f.station || '').replace(/"/g, '""'),
+        milesSince || '',
+        '', '', ''
+      ]);
+    });
+  }
   const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -1671,12 +2541,8 @@ function exportCSV() {
 }
 
 async function exportReceipts() {
-  const receipts = await getAllReceipts();
-  if (receipts.length === 0) {
-    alert('No receipt photos to export.');
-    return;
-  }
-  // Use a sequential download approach (no zip lib included to keep file small)
+  const receipts = await getAllReceiptsLocal();
+  if (receipts.length === 0) { alert('No receipt photos to export.'); return; }
   if (!confirm(`Download ${receipts.length} receipt photo(s)? They'll come down one at a time.`)) return;
 
   for (const r of receipts) {
@@ -1696,28 +2562,31 @@ async function exportReceipts() {
 }
 
 async function clearAllData() {
-  if (!confirm('Erase ALL entries, overhead, AND receipts permanently? This cannot be undone.')) return;
+  if (!confirm('Erase ALL entries, overhead, mileage, AND receipts permanently? This cannot be undone.')) return;
   if (!confirm('Really erase everything?')) return;
 
   for (const e of state.entries) {
-    if (e.hasReceipt) await deleteReceipt(String(e.id));
+    if (e.hasReceipt || e.receiptUrl) {
+      await deleteReceiptLocal(String(e.id));
+      await deleteReceiptCloud(String(e.id));
+    }
+    await deleteEntryCloud(e.id);
   }
+  for (const o of state.overhead) await deleteOverheadCloud(o.id);
+  for (const m of state.mileage) await deleteMileageCloud(m.id);
+
   state.entries = [];
   state.overhead = [];
-  saveEntries();
-  saveOverhead();
+  state.mileage = [];
+  saveLocalAll();
   render();
 }
 
 // ===== EVENT WIRING =====
-document.addEventListener('DOMContentLoaded', async () => {
-  loadState();
+async function bootApp() {
+  loadStateLocal();
   populateCategoryDropdowns();
-  try {
-    db = await openDB();
-  } catch (e) {
-    console.error('IndexedDB unavailable:', e);
-  }
+  try { db = await openDB(); } catch (e) { console.error('IndexedDB unavailable:', e); }
   render();
 
   // Tabs
@@ -1731,11 +2600,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('tax-display').textContent = settings.taxRate + '%';
         document.getElementById('tax-slider').value = settings.taxRate;
         document.getElementById('tax-input').value = settings.taxRate;
+        document.getElementById('mileage-rate-input').value = settings.mileageRate;
       }
     });
   });
 
-  // Period toggle
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => setPeriod(btn.dataset.period));
   });
@@ -1756,18 +2625,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   });
 
-  // Entry form
   document.getElementById('show-form-btn').addEventListener('click', showEntryForm);
   document.getElementById('cancel-entry').addEventListener('click', hideEntryForm);
   document.getElementById('save-entry').addEventListener('click', addEntry);
 
-  // Show category dropdown when expense is entered
   document.getElementById('entry-expense').addEventListener('input', (e) => {
     const v = parseFloat(e.target.value) || 0;
     document.getElementById('category-wrap').style.display = v > 0 ? 'block' : 'none';
   });
 
-  // Receipt picker
   document.getElementById('take-receipt-btn').addEventListener('click', () => {
     document.getElementById('receipt-file').click();
   });
@@ -1779,39 +2645,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   document.getElementById('remove-receipt-btn').addEventListener('click', () => {
     state.pendingReceipt = null;
+    state.pendingReceiptFile = null;
     resetReceiptPreview();
   });
 
-  // Overhead form
   document.getElementById('show-overhead-form-btn').addEventListener('click', showOverheadForm);
   document.getElementById('cancel-overhead').addEventListener('click', hideOverheadForm);
   document.getElementById('save-overhead').addEventListener('click', addOverhead);
 
-  // Lists (delegated)
-  document.getElementById('entry-list').addEventListener('click', (e) => {
-    const delBtn = e.target.closest('.entry-delete');
-    if (delBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      handleDeleteTap(delBtn.dataset.id, delBtn.dataset.type);
-      return;
-    }
-    const thumb = e.target.closest('.receipt-thumb');
-    if (thumb) {
-      e.preventDefault();
-      showReceiptModal(thumb.dataset.receiptId);
-    }
-  });
-  document.getElementById('overhead-list').addEventListener('click', (e) => {
-    const delBtn = e.target.closest('.entry-delete');
-    if (delBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      handleDeleteTap(delBtn.dataset.id, delBtn.dataset.type);
-    }
+  document.getElementById('show-fillup-form-btn').addEventListener('click', showFillupForm);
+  document.getElementById('cancel-fillup').addEventListener('click', hideFillupForm);
+  document.getElementById('save-fillup').addEventListener('click', addFillup);
+
+  // List delegation
+  ['entry-list', 'overhead-list', 'fillup-list'].forEach(listId => {
+    document.getElementById(listId).addEventListener('click', (e) => {
+      const delBtn = e.target.closest('.entry-delete');
+      if (delBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDeleteTap(delBtn.dataset.id, delBtn.dataset.type);
+        return;
+      }
+      const thumb = e.target.closest('.receipt-thumb');
+      if (thumb) {
+        e.preventDefault();
+        showReceiptModal(thumb.dataset.receiptId);
+      }
+    });
   });
 
-  // Receipt modal
   document.getElementById('close-receipt-modal').addEventListener('click', () => {
     document.getElementById('receipt-modal').classList.remove('show');
   });
@@ -1821,7 +2684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Settings
+  // Tax rate slider
   const taxSlider = document.getElementById('tax-slider');
   const taxInput = document.getElementById('tax-input');
   const taxDisplay = document.getElementById('tax-display');
@@ -1847,6 +2710,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => { btn.textContent = orig; }, 1200);
   });
 
+  document.getElementById('save-mileage-rate').addEventListener('click', () => {
+    const v = Math.max(0, parseFloat(document.getElementById('mileage-rate-input').value) || 70);
+    settings.mileageRate = v;
+    saveSettings();
+    render();
+    const btn = document.getElementById('save-mileage-rate');
+    const orig = btn.textContent;
+    btn.textContent = 'Saved ✓';
+    setTimeout(() => { btn.textContent = orig; }, 1200);
+  });
+
   document.getElementById('export-csv').addEventListener('click', exportCSV);
   document.getElementById('export-receipts').addEventListener('click', exportReceipts);
   document.getElementById('clear-data').addEventListener('click', clearAllData);
@@ -1865,7 +2739,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('install-prompt').classList.remove('show');
     }
   });
-});
+
+  // Online/offline indicators
+  window.addEventListener('online', () => {
+    if (firebaseReady) setSyncStatus('connected', 'Synced');
+  });
+  window.addEventListener('offline', () => {
+    setSyncStatus('offline', 'Offline');
+  });
+
+  // Init firebase last so the app is fully usable even if it's slow to load
+  if (window.__firebase) {
+    initFirebase();
+  } else {
+    window.addEventListener('firebase-ready', initFirebase, { once: true });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootApp);
+} else {
+  bootApp();
+}
 </script>
 </body>
 </html>
