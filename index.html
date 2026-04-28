@@ -716,6 +716,96 @@ select {
   padding: 10px;
 }
 
+/* Multi-receipt picker for the form */
+.receipt-picker-multi {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.receipt-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  min-height: 0;
+}
+
+.receipt-thumbs:empty { display: none; }
+
+.pending-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--line-bright);
+  flex-shrink: 0;
+}
+
+.pending-thumb-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--bg);
+  border: 2px solid var(--bg-elev);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.receipt-actions-row {
+  display: flex;
+  gap: 8px;
+}
+
+.receipt-actions-row label.receipt-btn {
+  flex: 1;
+}
+
+/* Strip of thumbnails on entry rows showing all attached receipts */
+.entry-receipts {
+  display: flex;
+  gap: 4px;
+  margin-right: 6px;
+}
+
+.entry-receipts .receipt-thumb {
+  width: 32px;
+  height: 32px;
+  margin-right: 0;
+}
+
+.receipt-count-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1.5px solid var(--bg-elev);
+  z-index: 2;
+}
+
 .receipt-preview {
   width: 80px;
   height: 80px;
@@ -822,6 +912,30 @@ label.receipt-btn {
   font-size: 14px;
   cursor: pointer;
 }
+
+.modal-nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-nav-btn {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line-bright);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.modal-nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+.modal-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.modal-nav-btn:disabled:hover { border-color: var(--line-bright); color: var(--ink); }
 
 .cat-breakdown {
   background: var(--bg-elev);
@@ -1101,16 +1215,16 @@ label.receipt-btn {
           <textarea id="entry-notes" placeholder="e.g. PEX fittings + 1/2&quot; copper for Smith job" rows="2"></textarea>
         </div>
         <div>
-          <label>Receipt photo (optional)</label>
-          <div class="receipt-picker">
-            <div class="receipt-preview" id="receipt-preview">📷</div>
-            <div class="receipt-actions">
+          <label>Receipt photos (optional)</label>
+          <div class="receipt-picker-multi">
+            <div class="receipt-thumbs" id="pending-receipt-thumbs"></div>
+            <div class="receipt-actions-row">
               <input type="file" id="receipt-camera" accept="image/*" capture="environment" class="visually-hidden-input">
-              <input type="file" id="receipt-gallery" accept="image/*" class="visually-hidden-input">
+              <input type="file" id="receipt-gallery" accept="image/*" multiple class="visually-hidden-input">
               <label for="receipt-camera" class="receipt-btn" id="take-receipt-btn">📷 Take Photo</label>
               <label for="receipt-gallery" class="receipt-btn" id="choose-receipt-btn">🖼️ Choose from Gallery</label>
-              <button type="button" class="receipt-btn danger" id="remove-receipt-btn" style="display:none;">Remove</button>
             </div>
+            <div class="help-text" style="margin: 6px 0 0; font-size: 11px; font-style: normal;">Add as many as you need — one per store/parts house.</div>
           </div>
         </div>
         <button class="btn" id="save-entry">Save Entry</button>
@@ -1380,8 +1494,13 @@ label.receipt-btn {
 
 <div class="modal-backdrop" id="receipt-modal">
   <div class="modal-content">
+    <div id="receipt-modal-counter" style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim); letter-spacing:0.1em; text-transform:uppercase;">— of —</div>
     <img id="receipt-modal-img" alt="Receipt">
-    <button class="modal-close" id="close-receipt-modal">Close</button>
+    <div class="modal-nav">
+      <button class="modal-nav-btn" id="receipt-modal-prev" aria-label="Previous">‹ Prev</button>
+      <button class="modal-close" id="close-receipt-modal">Close</button>
+      <button class="modal-nav-btn" id="receipt-modal-next" aria-label="Next">Next ›</button>
+    </div>
   </div>
 </div>
 
@@ -1465,8 +1584,7 @@ let state = {
   weekOffset: 0,
   monthOffset: 0,
   period: 'week',
-  pendingReceipt: null,
-  pendingReceiptFile: null,
+  pendingReceipts: [],  // array of {id, base64} staged for current form
   editingEntryId: null,
   editingOverheadId: null,
   editingFillupId: null
@@ -1997,8 +2115,9 @@ function renderLedger() {
         ? `+${formatMoney(e.income)} / −${formatMoney(e.expense)}`
         : (e.income > 0 ? 'income' : 'expense');
       const catTag = e.category ? `<span class="category-pill">${escapeHtml(getCategoryLabel(e.category))}</span>` : '';
-      const receiptThumb = (e.hasReceipt || e.receiptUrl)
-        ? `<div class="receipt-thumb" data-receipt-id="${e.id}" id="thumb-${e.id}"></div>`
+      const receiptIds = getEntryReceiptIds(e);
+      const receiptThumb = receiptIds.length > 0
+        ? `<div class="receipt-thumb" data-receipt-id="${e.id}" id="thumb-${e.id}" style="position:relative;">${receiptIds.length > 1 ? `<span class="receipt-count-badge">${receiptIds.length}</span>` : ''}</div>`
         : '';
       return `
         <div class="entry fade-in">
@@ -2020,10 +2139,11 @@ function renderLedger() {
     }).join('');
 
     entries.forEach(async e => {
-      if (e.hasReceipt || e.receiptUrl) {
+      const receiptIds = getEntryReceiptIds(e);
+      if (receiptIds.length > 0) {
         const thumb = document.getElementById(`thumb-${e.id}`);
         if (thumb) {
-          const data = await loadReceiptForView(e);
+          const data = await loadReceiptByIdForView(receiptIds[0]);
           if (data) thumb.style.backgroundImage = `url("${data}")`;
         }
       }
@@ -2317,52 +2437,57 @@ async function saveEntry() {
   let entry;
 
   if (isEditing) {
-    // Find existing and update in place
     const existing = state.entries.find(e => String(e.id) === String(state.editingEntryId));
     if (!existing) {
       alert('Could not find entry to edit. Saving as new instead.');
       state.editingEntryId = null;
     } else {
-      entry = { ...existing, date, name, income, expense, category, notes };
+      // Migrate any legacy single-receipt to the receipts array
+      let receipts = (existing.receipts && existing.receipts.length > 0)
+        ? [...existing.receipts]
+        : (existing.hasReceipt || existing.receiptUrl ? [String(existing.id)] : []);
 
-      // If a new receipt was added during edit
-      if (state.pendingReceipt) {
+      // Append new pending receipts
+      for (const r of state.pendingReceipts) {
         try {
-          await saveReceiptLocal(String(entry.id), state.pendingReceipt);
-          entry.hasReceipt = true;
-          const url = await uploadReceiptCloud(String(entry.id), state.pendingReceipt);
-          if (url) entry.receiptUrl = url;
+          await saveReceiptLocal(r.id, r.base64);
+          await uploadReceiptCloud(r.id, r.base64);
+          receipts.push(r.id);
         } catch (e) {
           console.error('Receipt save err', e);
         }
       }
 
-      // Replace in array
+      entry = { ...existing, date, name, income, expense, category, notes, receipts };
+      // Clean up legacy fields
+      delete entry.hasReceipt;
+      delete entry.receiptUrl;
+
       state.entries = state.entries.map(e => String(e.id) === String(state.editingEntryId) ? entry : e);
     }
   }
 
   if (!isEditing || !entry) {
     const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
-    entry = { id, date, name, income, expense, category, notes, hasReceipt: false };
+    const receipts = [];
 
-    if (state.pendingReceipt) {
+    for (const r of state.pendingReceipts) {
       try {
-        await saveReceiptLocal(id, state.pendingReceipt);
-        entry.hasReceipt = true;
-        const url = await uploadReceiptCloud(id, state.pendingReceipt);
-        if (url) entry.receiptUrl = url;
+        await saveReceiptLocal(r.id, r.base64);
+        await uploadReceiptCloud(r.id, r.base64);
+        receipts.push(r.id);
       } catch (e) {
         console.error('Receipt save err', e);
       }
     }
+
+    entry = { id, date, name, income, expense, category, notes, receipts };
     state.entries.push(entry);
   }
 
   saveLocalAll();
   await syncEntryCloud(entry);
-  state.pendingReceipt = null;
-  state.pendingReceiptFile = null;
+  state.pendingReceipts = [];
   state.editingEntryId = null;
   hideEntryForm();
   render();
@@ -2457,7 +2582,7 @@ async function saveFillup() {
           expense: cost,
           category: 'vehicle_fuel',
           notes: `Fillup: ${odometer.toLocaleString()} mi`,
-          hasReceipt: false,
+          receipts: [],
           linkedFillupId: fillup.id
         };
         state.entries.push(expEntry);
@@ -2482,7 +2607,7 @@ async function saveFillup() {
         expense: cost,
         category: 'vehicle_fuel',
         notes: `Fillup: ${odometer.toLocaleString()} mi`,
-        hasReceipt: false,
+        receipts: [],
         linkedFillupId: id
       };
       state.entries.push(expEntry);
@@ -2500,9 +2625,12 @@ async function saveFillup() {
 async function deleteItemAction(id, type) {
   if (type === 'entry') {
     const entry = state.entries.find(e => String(e.id) === String(id));
-    if (entry && (entry.hasReceipt || entry.receiptUrl)) {
-      await deleteReceiptLocal(String(id));
-      await deleteReceiptCloud(String(id));
+    if (entry) {
+      const receiptIds = getEntryReceiptIds(entry);
+      for (const rid of receiptIds) {
+        await deleteReceiptLocal(String(rid));
+        await deleteReceiptCloud(String(rid));
+      }
     }
     state.entries = state.entries.filter(e => String(e.id) !== String(id));
     saveLocalAll();
@@ -2559,11 +2687,10 @@ function showEntryForm() {
   document.getElementById('entry-notes').value = '';
   document.getElementById('category-wrap').style.display = 'none';
   document.getElementById('save-entry').textContent = 'Save Entry';
-  state.pendingReceipt = null;
-  state.pendingReceiptFile = null;
-  resetReceiptPreview();
+  state.pendingReceipts = [];
+  renderPendingReceipts();
+  renderExistingReceiptsInForm([]);
   setTimeout(() => document.getElementById('entry-name').focus(), 100);
-  // Scroll to form
   setTimeout(() => document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
@@ -2571,7 +2698,6 @@ async function editEntry(id) {
   const entry = state.entries.find(e => String(e.id) === String(id));
   if (!entry) return;
 
-  // Don't allow editing fuel-linked entries directly (edit the fillup instead)
   if (entry.linkedFillupId) {
     alert('This is an auto-created fuel entry. Edit the fillup on the Mileage tab to change it.');
     return;
@@ -2588,32 +2714,74 @@ async function editEntry(id) {
   document.getElementById('entry-notes').value = entry.notes || '';
   document.getElementById('category-wrap').style.display = entry.expense > 0 ? 'block' : 'none';
   document.getElementById('save-entry').textContent = 'Update Entry';
-  state.pendingReceipt = null;
-  state.pendingReceiptFile = null;
-  resetReceiptPreview();
+  state.pendingReceipts = [];
+  renderPendingReceipts();
 
-  // If entry has a receipt, show it in the preview
-  if (entry.hasReceipt || entry.receiptUrl) {
-    const data = await loadReceiptForView(entry);
-    if (data) {
-      const preview = document.getElementById('receipt-preview');
-      preview.style.backgroundImage = `url("${data}")`;
-      preview.textContent = '';
-      // Don't show Replace/Remove for existing receipt unless user picks new one
-      // (We don't want them to accidentally clear the existing receipt)
-    }
-  }
+  // Show existing receipts as visible thumbnails
+  const existingIds = getEntryReceiptIds(entry);
+  await renderExistingReceiptsInForm(existingIds);
 
   setTimeout(() => document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+async function renderExistingReceiptsInForm(receiptIds) {
+  const container = document.getElementById('pending-receipt-thumbs');
+  if (!container) return;
+  if (receiptIds.length === 0) {
+    if (state.pendingReceipts.length === 0) container.innerHTML = '';
+    return;
+  }
+  // Render existing receipts (read from local cache or cloud) marked as existing
+  const existingHtml = [];
+  for (const rid of receiptIds) {
+    const data = await loadReceiptByIdForView(rid);
+    if (data) {
+      existingHtml.push(`
+        <div class="pending-thumb" style="background-image:url('${data}')" data-existing-id="${escapeHtml(String(rid))}">
+          <button type="button" class="pending-thumb-remove" data-existing-remove="${escapeHtml(String(rid))}" aria-label="Remove">×</button>
+        </div>
+      `);
+    }
+  }
+  container.innerHTML = existingHtml.join('') + container.innerHTML;
+}
+
+async function removeExistingReceipt(receiptId) {
+  if (!confirm('Remove this receipt? This cannot be undone.')) return;
+  if (state.editingEntryId === null) return;
+  const entry = state.entries.find(e => String(e.id) === String(state.editingEntryId));
+  if (!entry) return;
+
+  // Get current receipt IDs
+  const currentIds = getEntryReceiptIds(entry);
+  const newIds = currentIds.filter(rid => String(rid) !== String(receiptId));
+
+  // Update entry in state immediately
+  const updated = { ...entry, receipts: newIds };
+  delete updated.hasReceipt;
+  delete updated.receiptUrl;
+  state.entries = state.entries.map(e => String(e.id) === String(state.editingEntryId) ? updated : e);
+
+  // Delete the receipt file
+  await deleteReceiptLocal(String(receiptId));
+  await deleteReceiptCloud(String(receiptId));
+
+  // Save and resync
+  saveLocalAll();
+  await syncEntryCloud(updated);
+
+  // Re-render the form's existing receipts
+  await renderExistingReceiptsInForm(newIds);
+  render();
 }
 
 function hideEntryForm() {
   document.getElementById('entry-form').style.display = 'none';
   document.getElementById('show-form-btn').style.display = 'block';
   document.getElementById('save-entry').textContent = 'Save Entry';
-  state.pendingReceipt = null;
-  state.pendingReceiptFile = null;
+  state.pendingReceipts = [];
   state.editingEntryId = null;
+  document.getElementById('pending-receipt-thumbs').innerHTML = '';
 }
 
 function showOverheadForm() {
@@ -2731,29 +2899,102 @@ function compressImage(file, maxWidth = 1400, quality = 0.7) {
   });
 }
 
-async function handleReceiptFile(file) {
-  if (!file) return;
-  try {
-    const compressed = await compressImage(file);
-    state.pendingReceipt = compressed;
-    const preview = document.getElementById('receipt-preview');
-    preview.style.backgroundImage = `url("${compressed}")`;
-    preview.textContent = '';
-    document.getElementById('remove-receipt-btn').style.display = 'block';
-    document.getElementById('take-receipt-btn').textContent = '📷 Replace Photo';
-    document.getElementById('choose-receipt-btn').textContent = '🖼️ Replace from Gallery';
-  } catch (e) {
-    alert('Could not process image: ' + e.message);
+async function handleReceiptFiles(files) {
+  if (!files || files.length === 0) return;
+  for (const file of files) {
+    try {
+      const compressed = await compressImage(file);
+      const id = 'rcpt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      state.pendingReceipts.push({ id, base64: compressed });
+    } catch (e) {
+      console.error('Could not process image:', e);
+      alert('Could not process one of the images: ' + e.message);
+    }
+  }
+  renderPendingReceipts();
+}
+
+function renderPendingReceipts() {
+  const container = document.getElementById('pending-receipt-thumbs');
+  if (!container) return;
+  if (state.pendingReceipts.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = state.pendingReceipts.map((r, i) => `
+    <div class="pending-thumb" style="background-image:url('${r.base64}')" data-pending-idx="${i}">
+      <button type="button" class="pending-thumb-remove" data-pending-remove="${i}" aria-label="Remove">×</button>
+    </div>
+  `).join('');
+}
+
+function removePendingReceipt(idx) {
+  state.pendingReceipts.splice(idx, 1);
+  renderPendingReceipts();
+}
+
+let modalReceiptList = [];
+let modalReceiptIdx = 0;
+
+async function showReceiptModal(entryId) {
+  const entry = state.entries.find(e => String(e.id) === String(entryId));
+  if (!entry) { alert('Entry not found.'); return; }
+  const ids = getEntryReceiptIds(entry);
+  if (ids.length === 0) { alert('No receipts attached.'); return; }
+  modalReceiptList = ids;
+  modalReceiptIdx = 0;
+  await renderModalReceipt();
+  document.getElementById('receipt-modal').classList.add('show');
+}
+
+async function renderModalReceipt() {
+  if (modalReceiptList.length === 0) return;
+  const id = modalReceiptList[modalReceiptIdx];
+  const data = await loadReceiptByIdForView(id);
+  if (data) {
+    document.getElementById('receipt-modal-img').src = data;
+  }
+  document.getElementById('receipt-modal-counter').textContent = `${modalReceiptIdx + 1} of ${modalReceiptList.length}`;
+  document.getElementById('receipt-modal-prev').disabled = modalReceiptIdx === 0;
+  document.getElementById('receipt-modal-next').disabled = modalReceiptIdx >= modalReceiptList.length - 1;
+}
+
+function modalNext() {
+  if (modalReceiptIdx < modalReceiptList.length - 1) {
+    modalReceiptIdx++;
+    renderModalReceipt();
   }
 }
 
-async function showReceiptModal(id) {
-  const entry = state.entries.find(e => String(e.id) === String(id));
-  if (!entry) { alert('Entry not found.'); return; }
-  const data = await loadReceiptForView(entry);
-  if (!data) { alert('Receipt not available.'); return; }
-  document.getElementById('receipt-modal-img').src = data;
-  document.getElementById('receipt-modal').classList.add('show');
+function modalPrev() {
+  if (modalReceiptIdx > 0) {
+    modalReceiptIdx--;
+    renderModalReceipt();
+  }
+}
+
+// Returns the array of receipt IDs for an entry, handling legacy single-receipt entries
+function getEntryReceiptIds(entry) {
+  if (entry.receipts && entry.receipts.length > 0) return entry.receipts;
+  // Legacy: hasReceipt or receiptUrl means there's one receipt with the entry's own ID
+  if (entry.hasReceipt || entry.receiptUrl) return [String(entry.id)];
+  return [];
+}
+
+async function loadReceiptByIdForView(receiptId) {
+  // Try local cache first
+  const local = await loadReceiptLocal(String(receiptId));
+  if (local) return local;
+  // Fall back to cloud
+  if (firebaseReady && userId && window.__firebase) {
+    try {
+      const fb = window.__firebase;
+      const ref = fb.storageRef(fb.fstorage, `receipts/${userId}/${receiptId}.jpg`);
+      const url = await fb.getDownloadURL(ref);
+      return url;
+    } catch (e) { /* not in cloud either */ }
+  }
+  return null;
 }
 
 // ===== TAX REPORT =====
@@ -3162,7 +3403,7 @@ function downloadReportCSV() {
       (e.notes || '').replace(/"/g, '""').replace(/\n/g, ' '),
       (e.income || 0).toFixed(2),
       (e.expense || 0).toFixed(2),
-      (e.hasReceipt || e.receiptUrl) ? 'Yes' : 'No'
+      getEntryReceiptIds(e).length > 0 ? `Yes (${getEntryReceiptIds(e).length})` : 'No'
     ]);
   });
 
@@ -3225,7 +3466,7 @@ function exportCSV() {
       (e.income || 0).toFixed(2),
       (e.expense || 0).toFixed(2),
       ((e.income || 0) - (e.expense || 0)).toFixed(2),
-      (e.hasReceipt || e.receiptUrl) ? 'Yes' : 'No'
+      getEntryReceiptIds(e).length > 0 ? `Yes (${getEntryReceiptIds(e).length})` : 'No'
     ]);
   });
   if (state.overhead.length > 0) {
@@ -3280,10 +3521,15 @@ async function exportReceipts() {
   if (!confirm(`Download ${receipts.length} receipt photo(s)? They'll come down one at a time.`)) return;
 
   for (const r of receipts) {
-    const entry = state.entries.find(e => String(e.id) === String(r.id));
-    const datePart = entry ? entry.date : 'unknown';
-    const namePart = entry ? entry.name.replace(/[^a-z0-9]+/gi, '-').slice(0, 30) : 'receipt';
-    const filename = `${datePart}_${namePart}_${String(r.id).slice(-6)}.jpg`;
+    // Find which entry this receipt belongs to
+    let owningEntry = null;
+    for (const e of state.entries) {
+      const ids = getEntryReceiptIds(e);
+      if (ids.includes(String(r.id))) { owningEntry = e; break; }
+    }
+    const datePart = owningEntry ? owningEntry.date : 'unknown';
+    const namePart = owningEntry ? owningEntry.name.replace(/[^a-z0-9]+/gi, '-').slice(0, 30) : 'receipt';
+    const filename = `${datePart}_${namePart}_${String(r.id).slice(-8)}.jpg`;
 
     const a = document.createElement('a');
     a.href = r.data;
@@ -3300,9 +3546,10 @@ async function clearAllData() {
   if (!confirm('Really erase everything?')) return;
 
   for (const e of state.entries) {
-    if (e.hasReceipt || e.receiptUrl) {
-      await deleteReceiptLocal(String(e.id));
-      await deleteReceiptCloud(String(e.id));
+    const ids = getEntryReceiptIds(e);
+    for (const rid of ids) {
+      await deleteReceiptLocal(String(rid));
+      await deleteReceiptCloud(String(rid));
     }
     await deleteEntryCloud(e.id);
   }
@@ -3370,21 +3617,33 @@ async function bootApp() {
 
   // Receipt: labels handle the click natively, we just listen for changes
   document.getElementById('receipt-camera').addEventListener('change', (e) => {
-    if (e.target.files && e.target.files[0]) {
-      handleReceiptFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      handleReceiptFiles(e.target.files);
     }
     e.target.value = '';
   });
   document.getElementById('receipt-gallery').addEventListener('change', (e) => {
-    if (e.target.files && e.target.files[0]) {
-      handleReceiptFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      handleReceiptFiles(e.target.files);
     }
     e.target.value = '';
   });
-  document.getElementById('remove-receipt-btn').addEventListener('click', () => {
-    state.pendingReceipt = null;
-    state.pendingReceiptFile = null;
-    resetReceiptPreview();
+  // Click delegation for removing pending OR existing receipts in the form
+  document.getElementById('pending-receipt-thumbs').addEventListener('click', (e) => {
+    const removePending = e.target.closest('[data-pending-remove]');
+    if (removePending) {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = parseInt(removePending.dataset.pendingRemove);
+      if (!isNaN(idx)) removePendingReceipt(idx);
+      return;
+    }
+    const removeExisting = e.target.closest('[data-existing-remove]');
+    if (removeExisting) {
+      e.preventDefault();
+      e.stopPropagation();
+      removeExistingReceipt(removeExisting.dataset.existingRemove);
+    }
   });
 
   document.getElementById('show-overhead-form-btn').addEventListener('click', showOverheadForm);
@@ -3427,10 +3686,19 @@ async function bootApp() {
   document.getElementById('close-receipt-modal').addEventListener('click', () => {
     document.getElementById('receipt-modal').classList.remove('show');
   });
+  document.getElementById('receipt-modal-prev').addEventListener('click', modalPrev);
+  document.getElementById('receipt-modal-next').addEventListener('click', modalNext);
   document.getElementById('receipt-modal').addEventListener('click', (e) => {
     if (e.target.id === 'receipt-modal') {
       document.getElementById('receipt-modal').classList.remove('show');
     }
+  });
+  // Keyboard nav for modal
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('receipt-modal').classList.contains('show')) return;
+    if (e.key === 'Escape') document.getElementById('receipt-modal').classList.remove('show');
+    if (e.key === 'ArrowLeft') modalPrev();
+    if (e.key === 'ArrowRight') modalNext();
   });
 
   // Tax rate slider
