@@ -341,7 +341,12 @@ header {
   padding: 14px 16px;
   border-bottom: 1px solid var(--line);
   align-items: center;
+  cursor: pointer;
+  transition: background 0.12s;
 }
+
+.entry:hover { background: var(--bg-elev-2); }
+.entry:active { background: rgba(212, 160, 78, 0.06); }
 
 .entry:last-child { border-bottom: none; }
 
@@ -750,6 +755,33 @@ select {
 .receipt-btn.danger { color: var(--red); border-color: var(--red); }
 .receipt-btn.danger:hover { background: rgba(217, 119, 87, 0.1); }
 
+/* Make label-style file inputs work like buttons */
+label.receipt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  color: var(--ink);
+  font-family: 'Fraunces', serif;
+}
+
+/* Visually hidden but still focusable/clickable on Android */
+.visually-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1001,6 +1033,7 @@ select {
     <button class="tab" data-view="overhead">Overhead</button>
     <button class="tab" data-view="mileage">Mileage</button>
     <button class="tab" data-view="taxes">Taxes</button>
+    <button class="tab" data-view="report">Report</button>
     <button class="tab" data-view="settings">Settings</button>
   </div>
 
@@ -1072,8 +1105,10 @@ select {
           <div class="receipt-picker">
             <div class="receipt-preview" id="receipt-preview">📷</div>
             <div class="receipt-actions">
-              <input type="file" id="receipt-file" accept="image/*" capture="environment" style="display:none;">
-              <button type="button" class="receipt-btn" id="take-receipt-btn">Take / Choose Photo</button>
+              <input type="file" id="receipt-camera" accept="image/*" capture="environment" class="visually-hidden-input">
+              <input type="file" id="receipt-gallery" accept="image/*" class="visually-hidden-input">
+              <label for="receipt-camera" class="receipt-btn" id="take-receipt-btn">📷 Take Photo</label>
+              <label for="receipt-gallery" class="receipt-btn" id="choose-receipt-btn">🖼️ Choose from Gallery</label>
               <button type="button" class="receipt-btn danger" id="remove-receipt-btn" style="display:none;">Remove</button>
             </div>
           </div>
@@ -1085,6 +1120,7 @@ select {
 
     <div class="section-head">
       <span class="section-title">Entries <em id="entry-count">— 0 —</em></span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-mute); letter-spacing: 0.08em; text-transform: uppercase;">Tap to edit · × to delete</span>
     </div>
     <div class="entries" id="entry-list"></div>
 
@@ -1147,6 +1183,7 @@ select {
 
     <div class="section-head">
       <span class="section-title">Recurring items <em id="overhead-count">— 0 —</em></span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-mute); letter-spacing: 0.08em; text-transform: uppercase;">Tap to edit</span>
     </div>
     <div class="entries" id="overhead-list"></div>
   </div>
@@ -1207,6 +1244,7 @@ select {
 
     <div class="section-head">
       <span class="section-title">Fillups <em id="fillup-count">— 0 —</em></span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-mute); letter-spacing: 0.08em; text-transform: uppercase;">Tap to edit</span>
     </div>
     <div class="entries" id="fillup-list"></div>
   </div>
@@ -1222,6 +1260,60 @@ select {
     <p class="help-text" style="margin: 16px 4px;">
       Pay federal estimates at <a href="https://directpay.irs.gov" target="_blank" style="color: var(--gold); text-decoration: none;">IRS Direct Pay</a> (free). Ohio state estimates at <a href="https://tax.ohio.gov" target="_blank" style="color: var(--gold); text-decoration: none;">tax.ohio.gov</a>. This app gives federal estimates only — Ohio adds roughly 3-4% on top.
     </p>
+  </div>
+
+  <!-- REPORT VIEW -->
+  <div class="view" id="view-report">
+    <p class="help-text" style="margin: 0 4px 16px; font-style: normal;">
+      Generate a clean tax report for your accountant. Pick any date range — typically the full prior year for tax filing.
+    </p>
+
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-row-split">
+          <div>
+            <label for="report-start">Start Date</label>
+            <input type="date" id="report-start">
+          </div>
+          <div>
+            <label for="report-end">End Date</label>
+            <input type="date" id="report-end">
+          </div>
+        </div>
+        <div class="form-row-split">
+          <button class="btn btn-secondary" id="report-preset-thisyear" type="button">This Year (YTD)</button>
+          <button class="btn btn-secondary" id="report-preset-lastyear" type="button">Last Year (Full)</button>
+        </div>
+        <div class="form-row-split">
+          <button class="btn btn-secondary" id="report-preset-thisq" type="button">This Quarter</button>
+          <button class="btn btn-secondary" id="report-preset-lastq" type="button">Last Quarter</button>
+        </div>
+        <div>
+          <label for="report-business-name">Business name on report</label>
+          <input type="text" id="report-business-name" placeholder="Critical Plumbing Ohio" autocomplete="off">
+        </div>
+        <div>
+          <label for="report-tax-id">Tax ID / EIN (optional)</label>
+          <input type="text" id="report-tax-id" placeholder="XX-XXXXXXX" autocomplete="off">
+        </div>
+        <div>
+          <label for="report-cpa-email">CPA email (optional)</label>
+          <input type="text" id="report-cpa-email" placeholder="cpa@example.com" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card" id="report-preview-wrap" style="display:none;">
+      <div class="section-head" style="margin-top: 0;">
+        <span class="section-title">Preview <em id="report-period-label">—</em></span>
+      </div>
+      <div id="report-preview" style="font-size: 14px; line-height: 1.5;"></div>
+    </div>
+
+    <button class="btn" id="generate-report" style="margin-bottom: 8px;">Generate Report</button>
+    <button class="btn" id="download-report-pdf" style="display:none; margin-bottom: 8px;">📄 Download PDF</button>
+    <button class="btn btn-secondary" id="email-report" style="display:none; margin-bottom: 8px;">✉️ Email to CPA</button>
+    <button class="btn btn-secondary" id="download-report-csv" style="display:none;">⬇️ Also Download as CSV</button>
   </div>
 
   <!-- SETTINGS VIEW -->
@@ -1374,7 +1466,10 @@ let state = {
   monthOffset: 0,
   period: 'week',
   pendingReceipt: null,
-  pendingReceiptFile: null  // raw file for cloud upload
+  pendingReceiptFile: null,
+  editingEntryId: null,
+  editingOverheadId: null,
+  editingFillupId: null
 };
 let settings = { taxRate: 30, mileageRate: 70 }; // mileage in cents
 let db = null; // IndexedDB for offline receipt cache
@@ -2204,7 +2299,7 @@ function populateCategoryDropdowns() {
 }
 
 // ===== ACTIONS =====
-async function addEntry() {
+async function saveEntry() {
   const date = document.getElementById('entry-date').value || todayISO();
   const name = document.getElementById('entry-name').value.trim();
   const income = parseFloat(document.getElementById('entry-income').value) || 0;
@@ -2218,31 +2313,62 @@ async function addEntry() {
     if (!confirm('No category selected for this expense. Save anyway? (Categories make tax-time much easier.)')) return;
   }
 
-  const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
-  const entry = { id, date, name, income, expense, category, notes, hasReceipt: false };
+  const isEditing = state.editingEntryId !== null;
+  let entry;
 
-  if (state.pendingReceipt) {
-    try {
-      await saveReceiptLocal(id, state.pendingReceipt);
-      entry.hasReceipt = true;
-      // Try cloud upload; if it fails, we still have it locally
-      const url = await uploadReceiptCloud(id, state.pendingReceipt);
-      if (url) entry.receiptUrl = url;
-    } catch (e) {
-      console.error('Receipt save err', e);
+  if (isEditing) {
+    // Find existing and update in place
+    const existing = state.entries.find(e => String(e.id) === String(state.editingEntryId));
+    if (!existing) {
+      alert('Could not find entry to edit. Saving as new instead.');
+      state.editingEntryId = null;
+    } else {
+      entry = { ...existing, date, name, income, expense, category, notes };
+
+      // If a new receipt was added during edit
+      if (state.pendingReceipt) {
+        try {
+          await saveReceiptLocal(String(entry.id), state.pendingReceipt);
+          entry.hasReceipt = true;
+          const url = await uploadReceiptCloud(String(entry.id), state.pendingReceipt);
+          if (url) entry.receiptUrl = url;
+        } catch (e) {
+          console.error('Receipt save err', e);
+        }
+      }
+
+      // Replace in array
+      state.entries = state.entries.map(e => String(e.id) === String(state.editingEntryId) ? entry : e);
     }
   }
 
-  state.entries.push(entry);
+  if (!isEditing || !entry) {
+    const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
+    entry = { id, date, name, income, expense, category, notes, hasReceipt: false };
+
+    if (state.pendingReceipt) {
+      try {
+        await saveReceiptLocal(id, state.pendingReceipt);
+        entry.hasReceipt = true;
+        const url = await uploadReceiptCloud(id, state.pendingReceipt);
+        if (url) entry.receiptUrl = url;
+      } catch (e) {
+        console.error('Receipt save err', e);
+      }
+    }
+    state.entries.push(entry);
+  }
+
   saveLocalAll();
   await syncEntryCloud(entry);
   state.pendingReceipt = null;
   state.pendingReceiptFile = null;
+  state.editingEntryId = null;
   hideEntryForm();
   render();
 }
 
-async function addOverhead() {
+async function saveOverhead() {
   const name = document.getElementById('oh-name').value.trim();
   const amount = parseFloat(document.getElementById('oh-amount').value) || 0;
   const frequency = document.getElementById('oh-frequency').value;
@@ -2252,16 +2378,33 @@ async function addOverhead() {
   if (!name) { alert('Enter a name (e.g. Truck payment).'); return; }
   if (amount <= 0) { alert('Enter an amount greater than zero.'); return; }
 
-  const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
-  const item = { id, name, amount, frequency, category, startDate };
-  state.overhead.push(item);
+  const isEditing = state.editingOverheadId !== null;
+  let item;
+
+  if (isEditing) {
+    const existing = state.overhead.find(o => String(o.id) === String(state.editingOverheadId));
+    if (existing) {
+      item = { ...existing, name, amount, frequency, category, startDate };
+      state.overhead = state.overhead.map(o => String(o.id) === String(state.editingOverheadId) ? item : o);
+    } else {
+      state.editingOverheadId = null;
+    }
+  }
+
+  if (!isEditing || !item) {
+    const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
+    item = { id, name, amount, frequency, category, startDate };
+    state.overhead.push(item);
+  }
+
   saveLocalAll();
   await syncOverheadCloud(item);
+  state.editingOverheadId = null;
   hideOverheadForm();
   render();
 }
 
-async function addFillup() {
+async function saveFillup() {
   const date = document.getElementById('fillup-date').value || todayISO();
   const odometer = parseInt(document.getElementById('fillup-odometer').value) || 0;
   const cost = parseFloat(document.getElementById('fillup-cost').value) || 0;
@@ -2270,36 +2413,86 @@ async function addFillup() {
   if (odometer <= 0) { alert('Enter an odometer reading.'); return; }
   if (cost < 0) { alert('Cost cannot be negative.'); return; }
 
-  // Sanity check: warn if odometer is lower than last reading
+  const isEditing = state.editingFillupId !== null;
   const sorted = getSortedFillups();
-  const last = sorted[sorted.length - 1];
+  // For edit, exclude the fillup being edited from comparison
+  const last = sorted.filter(f => String(f.id) !== String(state.editingFillupId)).pop();
   if (last && odometer < last.odometer) {
     if (!confirm(`That odometer (${odometer.toLocaleString()}) is lower than the last reading (${last.odometer.toLocaleString()}). Save anyway?`)) return;
   }
 
-  const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
-  const fillup = { id, date, odometer, cost, station };
-  state.mileage.push(fillup);
+  let fillup;
 
-  // ALSO create an expense entry for the gas
-  if (cost > 0) {
-    const expEntry = {
-      id: 'fuel_' + id,
-      date,
-      name: station || 'Fuel',
-      income: 0,
-      expense: cost,
-      category: 'vehicle_fuel',
-      notes: `Fillup: ${odometer.toLocaleString()} mi`,
-      hasReceipt: false,
-      linkedFillupId: id
-    };
-    state.entries.push(expEntry);
-    await syncEntryCloud(expEntry);
+  if (isEditing) {
+    const existing = state.mileage.find(m => String(m.id) === String(state.editingFillupId));
+    if (existing) {
+      fillup = { ...existing, date, odometer, cost, station };
+      state.mileage = state.mileage.map(m => String(m.id) === String(state.editingFillupId) ? fillup : m);
+
+      // Update the linked fuel expense entry (if it existed and we still have a cost)
+      const linkedExpense = state.entries.find(e => e.linkedFillupId === fillup.id);
+      if (linkedExpense) {
+        if (cost > 0) {
+          const updatedExpense = {
+            ...linkedExpense,
+            date,
+            name: station || 'Fuel',
+            expense: cost,
+            notes: `Fillup: ${odometer.toLocaleString()} mi`
+          };
+          state.entries = state.entries.map(e => e.id === linkedExpense.id ? updatedExpense : e);
+          await syncEntryCloud(updatedExpense);
+        } else {
+          // Cost zeroed out — remove the linked expense
+          state.entries = state.entries.filter(e => e.id !== linkedExpense.id);
+          await deleteEntryCloud(linkedExpense.id);
+        }
+      } else if (cost > 0) {
+        // No linked expense existed but now there's a cost — create one
+        const expEntry = {
+          id: 'fuel_' + fillup.id,
+          date,
+          name: station || 'Fuel',
+          income: 0,
+          expense: cost,
+          category: 'vehicle_fuel',
+          notes: `Fillup: ${odometer.toLocaleString()} mi`,
+          hasReceipt: false,
+          linkedFillupId: fillup.id
+        };
+        state.entries.push(expEntry);
+        await syncEntryCloud(expEntry);
+      }
+    } else {
+      state.editingFillupId = null;
+    }
+  }
+
+  if (!isEditing || !fillup) {
+    const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
+    fillup = { id, date, odometer, cost, station };
+    state.mileage.push(fillup);
+
+    if (cost > 0) {
+      const expEntry = {
+        id: 'fuel_' + id,
+        date,
+        name: station || 'Fuel',
+        income: 0,
+        expense: cost,
+        category: 'vehicle_fuel',
+        notes: `Fillup: ${odometer.toLocaleString()} mi`,
+        hasReceipt: false,
+        linkedFillupId: id
+      };
+      state.entries.push(expEntry);
+      await syncEntryCloud(expEntry);
+    }
   }
 
   saveLocalAll();
   await syncMileageCloud(fillup);
+  state.editingFillupId = null;
   hideFillupForm();
   render();
 }
@@ -2355,6 +2548,7 @@ function handleDeleteTap(id, type) {
 }
 
 function showEntryForm() {
+  state.editingEntryId = null;
   document.getElementById('entry-form').style.display = 'block';
   document.getElementById('show-form-btn').style.display = 'none';
   document.getElementById('entry-date').value = todayISO();
@@ -2364,20 +2558,66 @@ function showEntryForm() {
   document.getElementById('entry-category').value = '';
   document.getElementById('entry-notes').value = '';
   document.getElementById('category-wrap').style.display = 'none';
+  document.getElementById('save-entry').textContent = 'Save Entry';
   state.pendingReceipt = null;
   state.pendingReceiptFile = null;
   resetReceiptPreview();
   setTimeout(() => document.getElementById('entry-name').focus(), 100);
+  // Scroll to form
+  setTimeout(() => document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+async function editEntry(id) {
+  const entry = state.entries.find(e => String(e.id) === String(id));
+  if (!entry) return;
+
+  // Don't allow editing fuel-linked entries directly (edit the fillup instead)
+  if (entry.linkedFillupId) {
+    alert('This is an auto-created fuel entry. Edit the fillup on the Mileage tab to change it.');
+    return;
+  }
+
+  state.editingEntryId = id;
+  document.getElementById('entry-form').style.display = 'block';
+  document.getElementById('show-form-btn').style.display = 'none';
+  document.getElementById('entry-date').value = entry.date;
+  document.getElementById('entry-name').value = entry.name || '';
+  document.getElementById('entry-income').value = entry.income > 0 ? entry.income : '';
+  document.getElementById('entry-expense').value = entry.expense > 0 ? entry.expense : '';
+  document.getElementById('entry-category').value = entry.category || '';
+  document.getElementById('entry-notes').value = entry.notes || '';
+  document.getElementById('category-wrap').style.display = entry.expense > 0 ? 'block' : 'none';
+  document.getElementById('save-entry').textContent = 'Update Entry';
+  state.pendingReceipt = null;
+  state.pendingReceiptFile = null;
+  resetReceiptPreview();
+
+  // If entry has a receipt, show it in the preview
+  if (entry.hasReceipt || entry.receiptUrl) {
+    const data = await loadReceiptForView(entry);
+    if (data) {
+      const preview = document.getElementById('receipt-preview');
+      preview.style.backgroundImage = `url("${data}")`;
+      preview.textContent = '';
+      // Don't show Replace/Remove for existing receipt unless user picks new one
+      // (We don't want them to accidentally clear the existing receipt)
+    }
+  }
+
+  setTimeout(() => document.getElementById('entry-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
 function hideEntryForm() {
   document.getElementById('entry-form').style.display = 'none';
   document.getElementById('show-form-btn').style.display = 'block';
+  document.getElementById('save-entry').textContent = 'Save Entry';
   state.pendingReceipt = null;
   state.pendingReceiptFile = null;
+  state.editingEntryId = null;
 }
 
 function showOverheadForm() {
+  state.editingOverheadId = null;
   document.getElementById('overhead-form').style.display = 'block';
   document.getElementById('show-overhead-form-btn').style.display = 'none';
   document.getElementById('oh-name').value = '';
@@ -2385,27 +2625,65 @@ function showOverheadForm() {
   document.getElementById('oh-frequency').value = 'monthly';
   document.getElementById('oh-category').value = '';
   document.getElementById('oh-start').value = todayISO();
+  document.getElementById('save-overhead').textContent = 'Save Overhead';
   setTimeout(() => document.getElementById('oh-name').focus(), 100);
+  setTimeout(() => document.getElementById('overhead-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+function editOverhead(id) {
+  const item = state.overhead.find(o => String(o.id) === String(id));
+  if (!item) return;
+  state.editingOverheadId = id;
+  document.getElementById('overhead-form').style.display = 'block';
+  document.getElementById('show-overhead-form-btn').style.display = 'none';
+  document.getElementById('oh-name').value = item.name || '';
+  document.getElementById('oh-amount').value = item.amount || '';
+  document.getElementById('oh-frequency').value = item.frequency || 'monthly';
+  document.getElementById('oh-category').value = item.category || '';
+  document.getElementById('oh-start').value = item.startDate || todayISO();
+  document.getElementById('save-overhead').textContent = 'Update Overhead';
+  setTimeout(() => document.getElementById('overhead-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
 function hideOverheadForm() {
   document.getElementById('overhead-form').style.display = 'none';
   document.getElementById('show-overhead-form-btn').style.display = 'block';
+  document.getElementById('save-overhead').textContent = 'Save Overhead';
+  state.editingOverheadId = null;
 }
 
 function showFillupForm() {
+  state.editingFillupId = null;
   document.getElementById('fillup-form').style.display = 'block';
   document.getElementById('show-fillup-form-btn').style.display = 'none';
   document.getElementById('fillup-date').value = todayISO();
   document.getElementById('fillup-odometer').value = '';
   document.getElementById('fillup-cost').value = '';
   document.getElementById('fillup-station').value = '';
+  document.getElementById('save-fillup').textContent = 'Save Fillup';
   setTimeout(() => document.getElementById('fillup-odometer').focus(), 100);
+  setTimeout(() => document.getElementById('fillup-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+function editFillup(id) {
+  const fillup = state.mileage.find(m => String(m.id) === String(id));
+  if (!fillup) return;
+  state.editingFillupId = id;
+  document.getElementById('fillup-form').style.display = 'block';
+  document.getElementById('show-fillup-form-btn').style.display = 'none';
+  document.getElementById('fillup-date').value = fillup.date;
+  document.getElementById('fillup-odometer').value = fillup.odometer || '';
+  document.getElementById('fillup-cost').value = fillup.cost || '';
+  document.getElementById('fillup-station').value = fillup.station || '';
+  document.getElementById('save-fillup').textContent = 'Update Fillup';
+  setTimeout(() => document.getElementById('fillup-form').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
 function hideFillupForm() {
   document.getElementById('fillup-form').style.display = 'none';
   document.getElementById('show-fillup-form-btn').style.display = 'block';
+  document.getElementById('save-fillup').textContent = 'Save Fillup';
+  state.editingFillupId = null;
 }
 
 function setPeriod(p) {
@@ -2423,7 +2701,8 @@ function resetReceiptPreview() {
   preview.style.backgroundImage = '';
   preview.textContent = '📷';
   document.getElementById('remove-receipt-btn').style.display = 'none';
-  document.getElementById('take-receipt-btn').textContent = 'Take / Choose Photo';
+  document.getElementById('take-receipt-btn').textContent = '📷 Take Photo';
+  document.getElementById('choose-receipt-btn').textContent = '🖼️ Choose from Gallery';
 }
 
 function compressImage(file, maxWidth = 1400, quality = 0.7) {
@@ -2461,7 +2740,8 @@ async function handleReceiptFile(file) {
     preview.style.backgroundImage = `url("${compressed}")`;
     preview.textContent = '';
     document.getElementById('remove-receipt-btn').style.display = 'block';
-    document.getElementById('take-receipt-btn').textContent = 'Replace Photo';
+    document.getElementById('take-receipt-btn').textContent = '📷 Replace Photo';
+    document.getElementById('choose-receipt-btn').textContent = '🖼️ Replace from Gallery';
   } catch (e) {
     alert('Could not process image: ' + e.message);
   }
@@ -2474,6 +2754,460 @@ async function showReceiptModal(id) {
   if (!data) { alert('Receipt not available.'); return; }
   document.getElementById('receipt-modal-img').src = data;
   document.getElementById('receipt-modal').classList.add('show');
+}
+
+// ===== TAX REPORT =====
+function buildReportData(startDate, endDate) {
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T23:59:59');
+
+  const entries = state.entries.filter(e => {
+    const d = new Date(e.date + 'T12:00:00');
+    return d >= start && d <= end;
+  });
+
+  const totalIncome = entries.reduce((s, e) => s + (e.income || 0), 0);
+  const totalDirectExpenses = entries.reduce((s, e) => s + (e.expense || 0), 0);
+
+  // Category breakdown of direct expenses
+  const expenseByCategory = {};
+  entries.forEach(e => {
+    if (!e.expense) return;
+    const cat = e.category || 'other';
+    expenseByCategory[cat] = (expenseByCategory[cat] || 0) + e.expense;
+  });
+
+  // Overhead allocation across the date range
+  const overheadByCategory = {};
+  let overheadTotal = 0;
+  state.overhead.forEach(item => {
+    if (!item.startDate) return;
+    const itemStart = new Date(item.startDate + 'T12:00:00');
+    if (itemStart > end) return;
+    const effectiveStart = itemStart > start ? itemStart : start;
+    const days = Math.max(0, Math.ceil((end - effectiveStart) / (1000 * 60 * 60 * 24)) + 1);
+    const weeks = days / 7;
+    let amount = 0;
+    if (item.frequency === 'weekly') {
+      amount = (Number(item.amount) || 0) * weeks;
+    } else if (item.frequency === 'monthly') {
+      amount = (Number(item.amount) || 0) * (weeks / 52 * 12);
+    }
+    const cat = item.category || 'other';
+    overheadByCategory[cat] = (overheadByCategory[cat] || 0) + amount;
+    overheadTotal += amount;
+  });
+
+  // Mileage in range
+  const mileageInfo = getMileageInRange(start, end);
+  const mileageDeduction = getMileageDeduction(mileageInfo.miles);
+
+  // Combined category totals (for Schedule C)
+  const combinedCategories = {};
+  Object.entries(expenseByCategory).forEach(([k, v]) => {
+    combinedCategories[k] = (combinedCategories[k] || 0) + v;
+  });
+  Object.entries(overheadByCategory).forEach(([k, v]) => {
+    combinedCategories[k] = (combinedCategories[k] || 0) + v;
+  });
+
+  const totalDeductions = totalDirectExpenses + overheadTotal + mileageDeduction;
+  const netIncome = totalIncome - totalDeductions;
+  const estimatedFedTax = Math.max(0, netIncome * settings.taxRate / 100);
+
+  // Customer revenue list
+  const customerRevenue = {};
+  entries.forEach(e => {
+    if (!e.income) return;
+    const name = e.name || 'Unknown';
+    customerRevenue[name] = (customerRevenue[name] || 0) + e.income;
+  });
+
+  // Quarterly breakdown
+  const year = start.getFullYear();
+  const quarters = [
+    { name: 'Q1', start: new Date(year, 0, 1), end: new Date(year, 2, 31, 23, 59, 59) },
+    { name: 'Q2', start: new Date(year, 3, 1), end: new Date(year, 5, 30, 23, 59, 59) },
+    { name: 'Q3', start: new Date(year, 6, 1), end: new Date(year, 8, 30, 23, 59, 59) },
+    { name: 'Q4', start: new Date(year, 9, 1), end: new Date(year, 11, 31, 23, 59, 59) }
+  ].map(q => {
+    const qStart = q.start > start ? q.start : start;
+    const qEnd = q.end < end ? q.end : end;
+    if (qStart > qEnd) return { ...q, income: 0, deductions: 0, net: 0, hidden: true };
+    const qEntries = state.entries.filter(e => {
+      const d = new Date(e.date + 'T12:00:00');
+      return d >= qStart && d <= qEnd;
+    });
+    const qIncome = qEntries.reduce((s, e) => s + (e.income || 0), 0);
+    const qExpense = qEntries.reduce((s, e) => s + (e.expense || 0), 0);
+    const qOverhead = getQuarterOverhead(qStart, qEnd);
+    const qMileageInfo = getMileageInRange(qStart, qEnd);
+    const qMileageDed = getMileageDeduction(qMileageInfo.miles);
+    const qDeductions = qExpense + qOverhead + qMileageDed;
+    return {
+      name: q.name,
+      income: qIncome,
+      deductions: qDeductions,
+      net: qIncome - qDeductions,
+      tax: Math.max(0, (qIncome - qDeductions) * settings.taxRate / 100)
+    };
+  }).filter(q => !q.hidden);
+
+  return {
+    startDate, endDate, start, end,
+    totalIncome, totalDirectExpenses, overheadTotal, mileageDeduction,
+    mileageMiles: mileageInfo.miles, mileageGas: mileageInfo.gas,
+    totalDeductions, netIncome, estimatedFedTax,
+    expenseByCategory, overheadByCategory, combinedCategories,
+    customerRevenue, quarters,
+    entryCount: entries.length,
+    fillupCount: state.mileage.filter(f => {
+      const d = new Date(f.date + 'T12:00:00');
+      return d >= start && d <= end;
+    }).length
+  };
+}
+
+function buildReportHTML(data, businessName, taxId) {
+  const periodLabel = `${new Date(data.startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} — ${new Date(data.endDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+  const generatedDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const catRows = Object.entries(data.combinedCategories)
+    .sort((a, b) => b[1] - a[1])
+    .map(([cat, amt]) => {
+      const c = CATEGORIES.find(x => x.id === cat);
+      const lbl = c ? c.label : cat;
+      const schedC = c ? c.schedC : '—';
+      return `<tr><td>${escapeHtml(lbl)}</td><td>${escapeHtml(schedC)}</td><td class="num">${formatMoney(amt)}</td></tr>`;
+    }).join('');
+
+  const customerRows = Object.entries(data.customerRevenue)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, rev]) => `<tr><td>${escapeHtml(name)}</td><td class="num">${formatMoney(rev)}</td></tr>`)
+    .join('');
+
+  const quarterRows = data.quarters.map(q => `
+    <tr>
+      <td>${q.name}</td>
+      <td class="num">${formatMoney(q.income)}</td>
+      <td class="num">${formatMoney(q.deductions)}</td>
+      <td class="num">${formatMoney(q.net)}</td>
+      <td class="num">${formatMoney(q.tax)}</td>
+    </tr>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tax Report — ${escapeHtml(businessName)} — ${periodLabel}</title>
+<style>
+  @page { size: letter; margin: 0.75in; }
+  body { font-family: Georgia, 'Times New Roman', serif; color: #1a1a1a; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.5; font-size: 12pt; }
+  h1 { font-size: 22pt; margin: 0 0 4px 0; color: #8b6914; letter-spacing: -0.5px; }
+  h2 { font-size: 14pt; margin: 28px 0 8px 0; color: #1a1a1a; border-bottom: 2px solid #8b6914; padding-bottom: 4px; }
+  h3 { font-size: 12pt; margin: 16px 0 6px 0; color: #555; }
+  .header { border-bottom: 3px double #8b6914; padding-bottom: 12px; margin-bottom: 16px; }
+  .header-meta { font-size: 10pt; color: #666; margin-top: 4px; }
+  .biz { font-size: 13pt; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px 0; font-size: 11pt; }
+  th { text-align: left; padding: 6px 8px; background: #f5f0e6; border-bottom: 1.5px solid #8b6914; font-weight: 600; }
+  td { padding: 5px 8px; border-bottom: 1px solid #e5e5e5; }
+  td.num, th.num { text-align: right; font-family: 'Courier New', monospace; }
+  .totals { margin: 12px 0; padding: 12px 16px; background: #faf6ed; border-left: 4px solid #8b6914; }
+  .totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12pt; }
+  .totals-row.big { font-size: 14pt; font-weight: bold; border-top: 2px solid #8b6914; padding-top: 10px; margin-top: 8px; }
+  .totals-row .num { font-family: 'Courier New', monospace; }
+  .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #ccc; font-size: 9pt; color: #888; text-align: center; }
+  .note { font-size: 10pt; color: #555; font-style: italic; margin: 8px 0; }
+  @media print { body { padding: 0; } .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Year-End Tax Summary</h1>
+  <div class="biz">${escapeHtml(businessName)}</div>
+  ${taxId ? `<div class="header-meta">EIN/Tax ID: ${escapeHtml(taxId)}</div>` : ''}
+  <div class="header-meta">Reporting period: <strong>${periodLabel}</strong></div>
+  <div class="header-meta">Generated: ${generatedDate}</div>
+</div>
+
+<div class="totals">
+  <div class="totals-row"><span>Total Income</span><span class="num">${formatMoney(data.totalIncome)}</span></div>
+  <div class="totals-row"><span>Total Deductions</span><span class="num">−${formatMoney(data.totalDeductions)}</span></div>
+  <div class="totals-row big"><span>Net Income</span><span class="num">${formatMoney(data.netIncome)}</span></div>
+  <div class="totals-row" style="margin-top: 8px; font-size: 11pt; color: #666;"><span>Estimated federal tax (at ${settings.taxRate}%)</span><span class="num">${formatMoney(data.estimatedFedTax)}</span></div>
+</div>
+
+<h2>Income Summary</h2>
+<table>
+  <tr><th>Description</th><th class="num">Amount</th></tr>
+  <tr><td>Gross income from ${data.entryCount} entries</td><td class="num">${formatMoney(data.totalIncome)}</td></tr>
+</table>
+
+<h2>Deductions by Schedule C Category</h2>
+<table>
+  <tr><th>Category</th><th>Schedule C Line</th><th class="num">Amount</th></tr>
+  ${catRows || '<tr><td colspan="3" style="text-align: center; color: #888; font-style: italic;">No categorized deductions</td></tr>'}
+  <tr style="font-weight: bold; background: #f5f0e6;">
+    <td colspan="2">Subtotal (categorized expenses + overhead)</td>
+    <td class="num">${formatMoney(data.totalDirectExpenses + data.overheadTotal)}</td>
+  </tr>
+</table>
+
+<h2>Vehicle / Mileage</h2>
+<table>
+  <tr><th>Item</th><th class="num">Amount</th></tr>
+  <tr><td>Business miles driven (${data.fillupCount} fillups logged)</td><td class="num">${formatNum(data.mileageMiles)} mi</td></tr>
+  <tr><td>Mileage deduction at $${(settings.mileageRate / 100).toFixed(2)}/mi (Schedule C, Line 9)</td><td class="num">${formatMoney(data.mileageDeduction)}</td></tr>
+  <tr><td>Actual gas spent (informational only — already in mileage rate)</td><td class="num">${formatMoney(data.mileageGas)}</td></tr>
+</table>
+<p class="note">The standard mileage rate already includes gas, depreciation, insurance, and maintenance. Don't double-deduct vehicle costs.</p>
+
+<h2>Quarterly Breakdown</h2>
+<table>
+  <tr><th>Quarter</th><th class="num">Income</th><th class="num">Deductions</th><th class="num">Net</th><th class="num">Est. Tax</th></tr>
+  ${quarterRows}
+</table>
+
+<h2>Top Customers / Revenue Sources</h2>
+<table>
+  <tr><th>Customer / Source</th><th class="num">Revenue</th></tr>
+  ${customerRows || '<tr><td colspan="2" style="text-align: center; color: #888; font-style: italic;">No income entries</td></tr>'}
+</table>
+
+<div class="footer">
+  Generated by Critical Plumbing Ledger · For tax preparation purposes · Receipts retained on file per IRS guidance
+</div>
+</body>
+</html>`;
+}
+
+function buildReportPreviewHTML(data) {
+  const catRows = Object.entries(data.combinedCategories)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([cat, amt]) => {
+      const c = CATEGORIES.find(x => x.id === cat);
+      const lbl = c ? c.label : cat;
+      return `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed var(--line);"><span style="color:var(--ink-dim);">${escapeHtml(lbl)}</span><span style="font-family:'JetBrains Mono',monospace; color:var(--red);">${formatMoney(amt)}</span></div>`;
+    }).join('');
+
+  const more = Object.keys(data.combinedCategories).length > 5 ? `<div style="color:var(--ink-mute); font-size:11px; padding-top:6px; font-style:italic;">+ ${Object.keys(data.combinedCategories).length - 5} more categories in full report</div>` : '';
+
+  return `
+    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line);">
+      <span style="color:var(--ink-dim);">Total Income</span>
+      <span style="font-family:'JetBrains Mono',monospace; color:var(--green); font-weight:600;">${formatMoney(data.totalIncome)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line);">
+      <span style="color:var(--ink-dim);">Job Expenses</span>
+      <span style="font-family:'JetBrains Mono',monospace; color:var(--red);">−${formatMoney(data.totalDirectExpenses)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line);">
+      <span style="color:var(--ink-dim);">Overhead</span>
+      <span style="font-family:'JetBrains Mono',monospace; color:var(--blue);">−${formatMoney(data.overheadTotal)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line);">
+      <span style="color:var(--ink-dim);">Mileage Deduction (${formatNum(data.mileageMiles)} mi)</span>
+      <span style="font-family:'JetBrains Mono',monospace; color:var(--copper);">−${formatMoney(data.mileageDeduction)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:6px; border-top:1px solid var(--line-bright);">
+      <span style="color:var(--ink); font-weight:600;">Net Income</span>
+      <span style="font-family:'JetBrains Mono',monospace; color:var(--gold); font-weight:600; font-size:18px;">${formatMoney(data.netIncome)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; padding:8px 0; color:var(--ink-dim); font-size:13px;">
+      <span>Est. federal tax at ${settings.taxRate}%</span>
+      <span style="font-family:'JetBrains Mono',monospace; color:var(--copper);">${formatMoney(data.estimatedFedTax)}</span>
+    </div>
+    <div style="margin-top:14px; font-family: 'JetBrains Mono', monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-mute);">Top Categories</div>
+    <div style="margin-top:6px;">${catRows || '<div style="color:var(--ink-mute); font-style:italic; font-size:13px; padding:8px 0;">No deductions yet</div>'}${more}</div>
+    <div style="margin-top:14px; padding-top:10px; border-top:1px dashed var(--line); font-size:11px; color:var(--ink-mute); font-style:italic;">
+      ${data.entryCount} entries · ${data.fillupCount} fillups · ${Object.keys(data.customerRevenue).length} unique customers
+    </div>
+  `;
+}
+
+let lastReportData = null;
+let lastReportHTML = null;
+
+function generateReport() {
+  const startDate = document.getElementById('report-start').value;
+  const endDate = document.getElementById('report-end').value;
+  const businessName = document.getElementById('report-business-name').value.trim() || 'Critical Plumbing Ohio';
+  const taxId = document.getElementById('report-tax-id').value.trim();
+
+  if (!startDate || !endDate) { alert('Please pick a start and end date.'); return; }
+  if (startDate > endDate) { alert('Start date must be before end date.'); return; }
+
+  const data = buildReportData(startDate, endDate);
+  lastReportData = data;
+  lastReportHTML = buildReportHTML(data, businessName, taxId);
+
+  document.getElementById('report-preview-wrap').style.display = 'block';
+  document.getElementById('report-period-label').textContent = `${formatDate(startDate)} – ${formatDate(endDate)}`;
+  document.getElementById('report-preview').innerHTML = buildReportPreviewHTML(data);
+  document.getElementById('download-report-pdf').style.display = 'block';
+  document.getElementById('email-report').style.display = 'block';
+  document.getElementById('download-report-csv').style.display = 'block';
+
+  // Save business info for next time
+  try {
+    localStorage.setItem('cp_ledger_report_meta', JSON.stringify({ businessName, taxId, cpaEmail: document.getElementById('report-cpa-email').value.trim() }));
+  } catch {}
+}
+
+function downloadReportPDF() {
+  if (!lastReportHTML) return;
+  // Open in a new window and trigger print dialog. User picks "Save as PDF" from the print dialog.
+  const win = window.open('', '_blank');
+  if (!win) {
+    alert('Please allow popups for this site so the report can open. Then try again.');
+    return;
+  }
+  win.document.write(lastReportHTML);
+  win.document.close();
+  // Give it a beat to render fonts/layout, then trigger print
+  setTimeout(() => {
+    try { win.focus(); win.print(); } catch (e) { console.error(e); }
+  }, 500);
+}
+
+function emailReport() {
+  if (!lastReportData || !lastReportHTML) return;
+  const cpaEmail = document.getElementById('report-cpa-email').value.trim();
+  const data = lastReportData;
+  const periodLabel = `${new Date(data.startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} – ${new Date(data.endDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  const businessName = document.getElementById('report-business-name').value.trim() || 'Critical Plumbing Ohio';
+
+  const subject = `Tax Summary — ${businessName} — ${periodLabel}`;
+  const body =
+`Hi,
+
+Attached is the tax summary for ${businessName} covering ${periodLabel}.
+
+Quick numbers:
+  Total income:         ${formatMoney(data.totalIncome)}
+  Total deductions:     ${formatMoney(data.totalDeductions)}
+  Net income:           ${formatMoney(data.netIncome)}
+  Mileage:              ${formatNum(data.mileageMiles)} mi (${formatMoney(data.mileageDeduction)} deduction)
+
+Note: I'll need to attach the PDF separately — please save the report from the next screen and attach it to this email before sending.
+
+Thanks,
+Nathan`;
+
+  const mailto = `mailto:${encodeURIComponent(cpaEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailto;
+
+  // Also open the PDF for them to save and attach
+  setTimeout(() => downloadReportPDF(), 500);
+}
+
+function downloadReportCSV() {
+  if (!lastReportData) return;
+  const data = lastReportData;
+  const businessName = document.getElementById('report-business-name').value.trim() || 'Critical Plumbing Ohio';
+
+  const rows = [];
+  rows.push([`Tax Summary - ${businessName}`]);
+  rows.push([`Period: ${data.startDate} to ${data.endDate}`]);
+  rows.push([`Generated: ${todayISO()}`]);
+  rows.push([]);
+  rows.push(['SUMMARY']);
+  rows.push(['Total Income', data.totalIncome.toFixed(2)]);
+  rows.push(['Total Direct Expenses', data.totalDirectExpenses.toFixed(2)]);
+  rows.push(['Total Overhead Allocated', data.overheadTotal.toFixed(2)]);
+  rows.push(['Mileage Deduction', data.mileageDeduction.toFixed(2)]);
+  rows.push(['Total Deductions', data.totalDeductions.toFixed(2)]);
+  rows.push(['Net Income', data.netIncome.toFixed(2)]);
+  rows.push(['Estimated Federal Tax', data.estimatedFedTax.toFixed(2)]);
+  rows.push([]);
+  rows.push(['MILEAGE DETAIL']);
+  rows.push(['Total Miles', data.mileageMiles]);
+  rows.push(['Standard Rate', `$${(settings.mileageRate / 100).toFixed(2)}/mi`]);
+  rows.push(['Gas Spent (informational)', data.mileageGas.toFixed(2)]);
+  rows.push([]);
+  rows.push(['DEDUCTIONS BY SCHEDULE C CATEGORY']);
+  rows.push(['Category', 'Schedule C Line', 'Amount']);
+  Object.entries(data.combinedCategories).sort((a, b) => b[1] - a[1]).forEach(([cat, amt]) => {
+    const c = CATEGORIES.find(x => x.id === cat);
+    rows.push([c ? c.label : cat, c ? c.schedC : '—', amt.toFixed(2)]);
+  });
+  rows.push([]);
+  rows.push(['QUARTERLY BREAKDOWN']);
+  rows.push(['Quarter', 'Income', 'Deductions', 'Net', 'Est. Tax']);
+  data.quarters.forEach(q => {
+    rows.push([q.name, q.income.toFixed(2), q.deductions.toFixed(2), q.net.toFixed(2), q.tax.toFixed(2)]);
+  });
+  rows.push([]);
+  rows.push(['REVENUE BY CUSTOMER']);
+  rows.push(['Customer', 'Revenue']);
+  Object.entries(data.customerRevenue).sort((a, b) => b[1] - a[1]).forEach(([name, rev]) => {
+    rows.push([name, rev.toFixed(2)]);
+  });
+  rows.push([]);
+  rows.push(['ALL ENTRIES IN PERIOD']);
+  rows.push(['Date', 'Customer/Store', 'Category', 'Schedule C Line', 'Notes', 'Income', 'Expense', 'Has Receipt']);
+  const sortedEntries = [...state.entries]
+    .filter(e => e.date >= data.startDate && e.date <= data.endDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  sortedEntries.forEach(e => {
+    const c = CATEGORIES.find(x => x.id === e.category);
+    rows.push([
+      e.date,
+      (e.name || '').replace(/"/g, '""'),
+      c ? c.label : (e.category || ''),
+      c ? c.schedC : '',
+      (e.notes || '').replace(/"/g, '""').replace(/\n/g, ' '),
+      (e.income || 0).toFixed(2),
+      (e.expense || 0).toFixed(2),
+      (e.hasReceipt || e.receiptUrl) ? 'Yes' : 'No'
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(c => `"${(c === undefined || c === null) ? '' : c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const safeBiz = businessName.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+  a.download = `${safeBiz}-tax-report-${data.startDate}-to-${data.endDate}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function setReportPreset(type) {
+  const now = new Date();
+  let start, end;
+  if (type === 'thisyear') {
+    start = new Date(now.getFullYear(), 0, 1);
+    end = now;
+  } else if (type === 'lastyear') {
+    start = new Date(now.getFullYear() - 1, 0, 1);
+    end = new Date(now.getFullYear() - 1, 11, 31);
+  } else if (type === 'thisq') {
+    const q = Math.floor(now.getMonth() / 3);
+    start = new Date(now.getFullYear(), q * 3, 1);
+    end = now;
+  } else if (type === 'lastq') {
+    const q = Math.floor(now.getMonth() / 3);
+    if (q === 0) {
+      start = new Date(now.getFullYear() - 1, 9, 1);
+      end = new Date(now.getFullYear() - 1, 11, 31);
+    } else {
+      start = new Date(now.getFullYear(), (q - 1) * 3, 1);
+      end = new Date(now.getFullYear(), q * 3, 0);
+    }
+  }
+  const toISO = d => {
+    const tz = d.getTimezoneOffset();
+    return new Date(d.getTime() - tz * 60000).toISOString().slice(0, 10);
+  };
+  document.getElementById('report-start').value = toISO(start);
+  document.getElementById('report-end').value = toISO(end);
 }
 
 function exportCSV() {
@@ -2627,17 +3361,21 @@ async function bootApp() {
 
   document.getElementById('show-form-btn').addEventListener('click', showEntryForm);
   document.getElementById('cancel-entry').addEventListener('click', hideEntryForm);
-  document.getElementById('save-entry').addEventListener('click', addEntry);
+  document.getElementById('save-entry').addEventListener('click', saveEntry);
 
   document.getElementById('entry-expense').addEventListener('input', (e) => {
     const v = parseFloat(e.target.value) || 0;
     document.getElementById('category-wrap').style.display = v > 0 ? 'block' : 'none';
   });
 
-  document.getElementById('take-receipt-btn').addEventListener('click', () => {
-    document.getElementById('receipt-file').click();
+  // Receipt: labels handle the click natively, we just listen for changes
+  document.getElementById('receipt-camera').addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleReceiptFile(e.target.files[0]);
+    }
+    e.target.value = '';
   });
-  document.getElementById('receipt-file').addEventListener('change', (e) => {
+  document.getElementById('receipt-gallery').addEventListener('change', (e) => {
     if (e.target.files && e.target.files[0]) {
       handleReceiptFile(e.target.files[0]);
     }
@@ -2651,11 +3389,11 @@ async function bootApp() {
 
   document.getElementById('show-overhead-form-btn').addEventListener('click', showOverheadForm);
   document.getElementById('cancel-overhead').addEventListener('click', hideOverheadForm);
-  document.getElementById('save-overhead').addEventListener('click', addOverhead);
+  document.getElementById('save-overhead').addEventListener('click', saveOverhead);
 
   document.getElementById('show-fillup-form-btn').addEventListener('click', showFillupForm);
   document.getElementById('cancel-fillup').addEventListener('click', hideFillupForm);
-  document.getElementById('save-fillup').addEventListener('click', addFillup);
+  document.getElementById('save-fillup').addEventListener('click', saveFillup);
 
   // List delegation
   ['entry-list', 'overhead-list', 'fillup-list'].forEach(listId => {
@@ -2671,7 +3409,18 @@ async function bootApp() {
       if (thumb) {
         e.preventDefault();
         showReceiptModal(thumb.dataset.receiptId);
+        return;
       }
+      // Tap on row body = edit
+      const row = e.target.closest('.entry');
+      if (!row) return;
+      const editBtn = row.querySelector('.entry-delete');
+      if (!editBtn) return;
+      const id = editBtn.dataset.id;
+      const type = editBtn.dataset.type;
+      if (type === 'entry') editEntry(id);
+      else if (type === 'overhead') editOverhead(id);
+      else if (type === 'mileage') editFillup(id);
     });
   });
 
@@ -2724,6 +3473,26 @@ async function bootApp() {
   document.getElementById('export-csv').addEventListener('click', exportCSV);
   document.getElementById('export-receipts').addEventListener('click', exportReceipts);
   document.getElementById('clear-data').addEventListener('click', clearAllData);
+
+  // Report tab wiring
+  document.getElementById('report-preset-thisyear').addEventListener('click', () => setReportPreset('thisyear'));
+  document.getElementById('report-preset-lastyear').addEventListener('click', () => setReportPreset('lastyear'));
+  document.getElementById('report-preset-thisq').addEventListener('click', () => setReportPreset('thisq'));
+  document.getElementById('report-preset-lastq').addEventListener('click', () => setReportPreset('lastq'));
+  document.getElementById('generate-report').addEventListener('click', generateReport);
+  document.getElementById('download-report-pdf').addEventListener('click', downloadReportPDF);
+  document.getElementById('email-report').addEventListener('click', emailReport);
+  document.getElementById('download-report-csv').addEventListener('click', downloadReportCSV);
+
+  // Restore saved business info for the report tab
+  try {
+    const saved = JSON.parse(localStorage.getItem('cp_ledger_report_meta') || '{}');
+    if (saved.businessName) document.getElementById('report-business-name').value = saved.businessName;
+    if (saved.taxId) document.getElementById('report-tax-id').value = saved.taxId;
+    if (saved.cpaEmail) document.getElementById('report-cpa-email').value = saved.cpaEmail;
+  } catch {}
+  // Default report dates to last year (most common use case)
+  setReportPreset('lastyear');
 
   let deferredPrompt;
   window.addEventListener('beforeinstallprompt', (e) => {
