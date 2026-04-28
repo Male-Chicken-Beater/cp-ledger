@@ -770,7 +770,8 @@ select {
   gap: 8px;
 }
 
-.receipt-actions-row label.receipt-btn {
+.receipt-actions-row label.receipt-btn,
+.receipt-actions-row button.receipt-btn {
   flex: 1;
 }
 
@@ -845,8 +846,9 @@ select {
 .receipt-btn.danger { color: var(--red); border-color: var(--red); }
 .receipt-btn.danger:hover { background: rgba(217, 119, 87, 0.1); }
 
-/* Make label-style file inputs work like buttons */
-label.receipt-btn {
+/* Receipt action buttons / labels - consistent styling */
+label.receipt-btn,
+button.receipt-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -858,6 +860,8 @@ label.receipt-btn {
   color: var(--ink);
   font-family: 'Fraunces', serif;
 }
+
+button.receipt-btn { background: transparent; }
 
 /* Visually hidden but still focusable/clickable on Android */
 .visually-hidden-input {
@@ -1219,12 +1223,14 @@ label.receipt-btn {
           <div class="receipt-picker-multi">
             <div class="receipt-thumbs" id="pending-receipt-thumbs"></div>
             <div class="receipt-actions-row">
-              <input type="file" id="receipt-camera" accept="image/*" capture="environment" class="visually-hidden-input">
+              <input type="file" id="receipt-camera" accept="image/*,android/allowCamera" capture="environment" class="visually-hidden-input">
               <input type="file" id="receipt-gallery" accept="image/*" multiple class="visually-hidden-input">
-              <label for="receipt-camera" class="receipt-btn" id="take-receipt-btn">📷 Take Photo</label>
-              <label for="receipt-gallery" class="receipt-btn" id="choose-receipt-btn">🖼️ Choose from Gallery</label>
+              <button type="button" class="receipt-btn" id="take-receipt-btn">📷 Take Photo</button>
+              <button type="button" class="receipt-btn" id="choose-receipt-btn">🖼️ Pick from Gallery</button>
             </div>
-            <div class="help-text" style="margin: 6px 0 0; font-size: 11px; font-style: normal;">Add as many as you need — one per store/parts house.</div>
+            <div class="help-text" style="margin: 8px 0 0; font-size: 11px; font-style: normal; line-height: 1.4;">
+              Add multiple receipts for one job — one per store/parts house. After each photo, tap a button again to add another.
+            </div>
           </div>
         </div>
         <button class="btn" id="save-entry">Save Entry</button>
@@ -2864,15 +2870,6 @@ function setPeriod(p) {
   render();
 }
 
-function resetReceiptPreview() {
-  const preview = document.getElementById('receipt-preview');
-  preview.style.backgroundImage = '';
-  preview.textContent = '📷';
-  document.getElementById('remove-receipt-btn').style.display = 'none';
-  document.getElementById('take-receipt-btn').textContent = '📷 Take Photo';
-  document.getElementById('choose-receipt-btn').textContent = '🖼️ Choose from Gallery';
-}
-
 function compressImage(file, maxWidth = 1400, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -3615,7 +3612,16 @@ async function bootApp() {
     document.getElementById('category-wrap').style.display = v > 0 ? 'block' : 'none';
   });
 
-  // Receipt: labels handle the click natively, we just listen for changes
+  // Receipt buttons: trigger their associated file input on click
+  document.getElementById('take-receipt-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('receipt-camera').click();
+  });
+  document.getElementById('choose-receipt-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('receipt-gallery').click();
+  });
+  // Receipt change listeners
   document.getElementById('receipt-camera').addEventListener('change', (e) => {
     if (e.target.files && e.target.files.length > 0) {
       handleReceiptFiles(e.target.files);
